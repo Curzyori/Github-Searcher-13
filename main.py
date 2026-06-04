@@ -34,9 +34,10 @@ GITHUB_SESSION_URL = "https://github.com/session"
 PER_PAGE = 30
 
 BANNER = r"""
-  ╔══════════════════════════════════════╗
-  ║         [Github Searcher]            ║
-  ╚══════════════════════════════════════╝
+╔══════════════════════════════════════════════════════════╗
+║                ⚙️  [GITHUB SEARCHER (13)]                 ║
+║         Collab Project: @Curzyori x @Seeyaa77            ║
+╚══════════════════════════════════════════════════════════╝
 """
 
 
@@ -314,7 +315,7 @@ async def run_engine_a(keyword: str, token: str, max_pages: int) -> None:
     total_tokens = 0
     total_files = 0
 
-    print(f"\n[Engine A] Searching via API for: '{keyword}'")
+    print(f"\n[Engine A] Target keyword dikunci: '{keyword}'")
     print(f"[Engine A] Pattern: {pattern.pattern}")
     print(f"[Engine A] Output : {output_dir.resolve()}\n")
 
@@ -324,10 +325,10 @@ async def run_engine_a(keyword: str, token: str, max_pages: int) -> None:
             if items is None:
                 break
             if not items:
-                print(f"[*] Tidak ada hasil lagi di page {page}. Selesai.")
+                print(f"[*] Page {page}: Tidak ada hasil lagi. Selesai.")
                 break
 
-            print(f"[*] Page {page}: memproses {len(items)} item ...")
+            print(f"[*] Page {page}: Scanning {len(items)} blob target...")
 
             tasks = [
                 process_api_item(
@@ -342,14 +343,14 @@ async def run_engine_a(keyword: str, token: str, max_pages: int) -> None:
             total_tokens += page_tokens
             total_files += page_files
 
-            print(f"    -> {page_files} file ditulis, {page_tokens} token unik")
+            print(f"    -> {page_files} file berhasil diekstrak | {page_tokens} token unik diamankan")
 
             if page < max_pages:
                 await asyncio.sleep(2.0)
 
     print(
-        f"\n[Engine A] Selesai. {total_files} file dibuat, "
-        f"{total_tokens} token unik total."
+        f"\n[\U0001f3c1] Proses Selesai. {total_files} file dump dibuat, "
+        f"total {total_tokens} token unik."
     )
 
 
@@ -488,7 +489,7 @@ async def run_engine_b(keyword: str, session_cookie: str, max_pages: int) -> Non
     total_tokens = 0
     total_files = 0
 
-    print(f"\n[Engine B] Searching via web UI for: '{keyword}'")
+    print(f"\n[Engine B] Target keyword dikunci: '{keyword}'")
     print(f"[Engine B] Pattern: {pattern.pattern}")
     print(f"[Engine B] Output : {output_dir.resolve()}\n")
 
@@ -508,10 +509,10 @@ async def run_engine_b(keyword: str, session_cookie: str, max_pages: int) -> Non
             if items is None:
                 break
             if not items:
-                print(f"[*] Tidak ada hasil lagi di page {page}. Selesai.")
+                print(f"[*] Page {page}: Tidak ada hasil lagi. Selesai.")
                 break
 
-            print(f"[*] Page {page}: memproses {len(items)} item ...")
+            print(f"[*] Page {page}: Scanning {len(items)} blob target...")
 
             tasks = [
                 process_web_item(client, item, pattern, output_dir, global_seen)
@@ -524,14 +525,14 @@ async def run_engine_b(keyword: str, session_cookie: str, max_pages: int) -> Non
             total_tokens += page_tokens
             total_files += page_files
 
-            print(f"    -> {page_files} file ditulis, {page_tokens} token unik")
+            print(f"    -> {page_files} file berhasil diekstrak | {page_tokens} token unik diamankan")
 
             if page < max_pages:
                 await asyncio.sleep(3.0)
 
     print(
-        f"\n[Engine B] Selesai. {total_files} file dibuat, "
-        f"{total_tokens} token unik total."
+        f"\n[\U0001f3c1] Proses Selesai. {total_files} file dump dibuat, "
+        f"total {total_tokens} token unik."
     )
 
 
@@ -550,11 +551,11 @@ def prompt_credentials() -> tuple[str, str, str | None]:
 def interactive_menu() -> None:
     """Top-level interactive menu that drives the whole session."""
     print(BANNER)
-    print("  1. Auto (With email/password/2fa simulation)")
-    print("  2. Skip (IF SUDAH MASUKIN GITHUB_TOKEN di env)")
+    print("  1. Auto Pilot  -> Sesi Browser (.env Session)")
+    print("  2. Fast Skip   -> Direct Token (GITHUB_TOKEN)")
     print()
 
-    choice = input("  Pilih mode [1/2]: ").strip()
+    choice = input("  [?] Pilih Mode Eksekusi [1/2]: ").strip()
 
     if choice == "1":
         handle_auto_mode()
@@ -577,7 +578,7 @@ def handle_auto_mode() -> None:
     existing_session = read_env_value("GITHUB_SESSION")
 
     if existing_session:
-        print(f"\n[*] GITHUB_SESSION ditemukan di .env. Skip login.")
+        print(f"\n[\u2714] Session Key Ditemukan di .env. Bypass Login State!")
         session_cookie = existing_session
     else:
         print("\n[*] GITHUB_SESSION belum ada. Mulai login ...\n")
@@ -595,7 +596,7 @@ def handle_auto_mode() -> None:
         print(f"[*] Session cookie disimpan ke .env (GITHUB_SESSION).")
 
     # Prompt for search query.
-    keyword = input("\n  input: masukkan input contoh api: ").strip()
+    keyword = input("\n  \U0001f4e5 Masukkan Keyword Pencarian (Contoh: api/skills): ").strip()
     if not keyword:
         print("[!] Keyword kosong. Keluar.")
         sys.exit(1)
@@ -613,9 +614,9 @@ def handle_skip_mode() -> None:
         print("[!] GITHUB_TOKEN tidak ditemukan di .env. Keluar.")
         sys.exit(1)
 
-    print(f"\n[*] GITHUB_TOKEN ditemukan. Menggunakan Engine A (API).")
+    print(f"\n[\u2714] Session Key Ditemukan di .env. Bypass Login State!")
 
-    keyword = input("\n  input: masukkan input contoh api: ").strip()
+    keyword = input("\n  \U0001f4e5 Masukkan Keyword Pencarian (Contoh: api/skills): ").strip()
     if not keyword:
         print("[!] Keyword kosong. Keluar.")
         sys.exit(1)

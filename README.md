@@ -3,4 +3,12 @@ Projects 13 - CLI
 
 run with
 
-.venv/bin/python main.py skills --max-pages 3
+Linux
+python3 main.py
+
+Windows
+python main.py
+
+Mac
+
+
