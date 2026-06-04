@@ -33,12 +33,42 @@ GITHUB_LOGIN_URL = "https://github.com/login"
 GITHUB_SESSION_URL = "https://github.com/session"
 PER_PAGE = 30
 
-BANNER = r"""
-╔══════════════════════════════════════════════════════════╗
-║                ⚙️  [GITHUB SEARCHER (13)]                 ║
-║         Collab Project: @Curzyori x @Seeyaa77            ║
-╚══════════════════════════════════════════════════════════╝
-"""
+
+# ---------------------------------------------------------------------------
+# Terminal ANSI styling
+# ---------------------------------------------------------------------------
+
+class TerminalStyle:
+    """ANSI escape code manager for terminal background colors."""
+
+    BANNER_BG = "\033[48;5;17m\033[97m"    # Dark blue bg + bright white text
+    SUCCESS_BG = "\033[48;5;22m\033[97m"   # Dark green bg + bright white text
+    WARNING_BG = "\033[48;5;124m\033[97m"  # Dark red/amber bg + bright white text
+    RESET = "\033[0m"
+
+    @classmethod
+    def banner(cls, text: str) -> str:
+        return f"{cls.BANNER_BG}{text}{cls.RESET}"
+
+    @classmethod
+    def success(cls, text: str) -> str:
+        return f"{cls.SUCCESS_BG}{text}{cls.RESET}"
+
+    @classmethod
+    def warning(cls, text: str) -> str:
+        return f"{cls.WARNING_BG}{text}{cls.RESET}"
+
+
+TS = TerminalStyle
+
+BANNER = (
+    f"\n{TS.BANNER_BG}"
+    f"╔══════════════════════════════════════════════════════════╗\n"
+    f"║                ⚙️  [GITHUB SEARCHER (13)]                 ║\n"
+    f"║         Collab Project: @Curzyori x @Seeyaa77            ║\n"
+    f"╚══════════════════════════════════════════════════════════╝"
+    f"{TS.RESET}\n"
+)
 
 
 # ---------------------------------------------------------------------------
@@ -127,17 +157,17 @@ async def github_login(email: str, password: str, otp: str | None) -> str | None
         try:
             login_page = await client.get(GITHUB_LOGIN_URL)
         except httpx.RequestError as exc:
-            print(f"[!] Gagal konek ke GitHub login page: {exc}")
+            print(TS.warning(f"[!] Gagal konek ke GitHub login page: {exc}"))
             return None
 
         if login_page.status_code != 200:
-            print(f"[!] Login page returned HTTP {login_page.status_code}")
+            print(TS.warning(f"[!] Login page returned HTTP {login_page.status_code}"))
             return None
 
         soup = BeautifulSoup(login_page.text, "html.parser")
         token_input = soup.find("input", attrs={"name": "authenticity_token"})
         if token_input is None:
-            print("[!] Tidak bisa menemukan authenticity_token di login page.")
+            print(TS.warning("[!] Tidak bisa menemukan authenticity_token di login page."))
             return None
 
         authenticity_token = token_input.get("value", "")
@@ -170,7 +200,7 @@ async def github_login(email: str, password: str, otp: str | None) -> str | None
                 headers=post_headers,
             )
         except httpx.RequestError as exc:
-            print(f"[!] Gagal POST ke /session: {exc}")
+            print(TS.warning(f"[!] Gagal POST ke /session: {exc}"))
             return None
 
         # -- Step 3: fish out user_session cookie -------------------------
@@ -180,9 +210,9 @@ async def github_login(email: str, password: str, otp: str | None) -> str | None
 
         # If we landed on a 2FA challenge page, report it.
         if "two-factor" in str(session_resp.url):
-            print("[!] GitHub minta 2FA tapi OTP tidak valid atau kosong.")
+            print(TS.warning("[!] GitHub minta 2FA tapi OTP tidak valid atau kosong."))
         else:
-            print("[!] Login gagal. Periksa email/password kamu.")
+            print(TS.warning("[!] Login gagal. Periksa email/password kamu."))
         return None
 
 
@@ -210,11 +240,11 @@ async def api_search_page(
         return None
 
     if resp.status_code == 401:
-        print("[!] Token tidak valid (HTTP 401). Periksa GITHUB_TOKEN.")
+        print(TS.warning("[!] Token tidak valid (HTTP 401). Periksa GITHUB_TOKEN."))
         return None
     if resp.status_code == 403:
         reset_ts = resp.headers.get("X-RateLimit-Reset", "unknown")
-        print(f"[!] Rate-limited (403). Reset at timestamp {reset_ts}. Berhenti.")
+        print(TS.warning(f"[!] Rate-limited (403). Reset at timestamp {reset_ts}. Berhenti."))
         return None
     if resp.status_code == 422:
         print(f"[*] Page {page} melewati batas result window. Selesai.")
@@ -240,7 +270,7 @@ async def fetch_raw_content(
         return None
 
     if resp.status_code in (401, 403):
-        print(f"[!] Rate-limited / unauthorized ({resp.status_code}). Skip file.")
+        print(TS.warning(f"[!] Rate-limited / unauthorized ({resp.status_code}). Skip file."))
         return None
     if resp.status_code != 200:
         return None
@@ -343,15 +373,15 @@ async def run_engine_a(keyword: str, token: str, max_pages: int) -> None:
             total_tokens += page_tokens
             total_files += page_files
 
-            print(f"    -> {page_files} file berhasil diekstrak | {page_tokens} token unik diamankan")
+            print(TS.success(f"    -> {page_files} file berhasil diekstrak | {page_tokens} token unik diamankan"))
 
             if page < max_pages:
                 await asyncio.sleep(2.0)
 
-    print(
+    print(TS.success(
         f"\n[\U0001f3c1] Proses Selesai. {total_files} file dump dibuat, "
         f"total {total_tokens} token unik."
-    )
+    ))
 
 
 # ---------------------------------------------------------------------------
@@ -411,7 +441,7 @@ async def web_search_page(
         return None
 
     if resp.status_code in (401, 403):
-        print(f"[!] Session expired atau rate-limited ({resp.status_code}). Berhenti.")
+        print(TS.warning(f"[!] Session expired atau rate-limited ({resp.status_code}). Berhenti."))
         return None
     if resp.status_code != 200:
         print(f"[!] HTTP {resp.status_code} di page {page}. Berhenti.")
@@ -444,7 +474,7 @@ async def process_web_item(
         return 0
 
     if resp.status_code in (401, 403):
-        print(f"[!] Rate-limited / unauthorized ({resp.status_code}). Skip file.")
+        print(TS.warning(f"[!] Rate-limited / unauthorized ({resp.status_code}). Skip file."))
         return 0
     if resp.status_code != 200:
         return 0
@@ -525,15 +555,15 @@ async def run_engine_b(keyword: str, session_cookie: str, max_pages: int) -> Non
             total_tokens += page_tokens
             total_files += page_files
 
-            print(f"    -> {page_files} file berhasil diekstrak | {page_tokens} token unik diamankan")
+            print(TS.success(f"    -> {page_files} file berhasil diekstrak | {page_tokens} token unik diamankan"))
 
             if page < max_pages:
                 await asyncio.sleep(3.0)
 
-    print(
+    print(TS.success(
         f"\n[\U0001f3c1] Proses Selesai. {total_files} file dump dibuat, "
         f"total {total_tokens} token unik."
-    )
+    ))
 
 
 # ---------------------------------------------------------------------------
@@ -578,7 +608,7 @@ def handle_auto_mode() -> None:
     existing_session = read_env_value("GITHUB_SESSION")
 
     if existing_session:
-        print(f"\n[\u2714] Session Key Ditemukan di .env. Bypass Login State!")
+        print(TS.success(f"\n[\u2714] Session Key Ditemukan di .env. Bypass Login State!"))
         session_cookie = existing_session
     else:
         print("\n[*] GITHUB_SESSION belum ada. Mulai login ...\n")
@@ -588,7 +618,7 @@ def handle_auto_mode() -> None:
         session_cookie = asyncio.run(github_login(email, password, otp))
 
         if not session_cookie:
-            print("[!] Gagal mendapatkan session cookie. Keluar.")
+            print(TS.warning("[!] Gagal mendapatkan session cookie. Keluar."))
             sys.exit(1)
 
         # Persist to .env so subsequent runs skip the login step.
@@ -611,10 +641,10 @@ def handle_skip_mode() -> None:
 
     token = os.getenv("GITHUB_TOKEN") or read_env_value("GITHUB_TOKEN")
     if not token:
-        print("[!] GITHUB_TOKEN tidak ditemukan di .env. Keluar.")
+        print(TS.warning("[!] GITHUB_TOKEN tidak ditemukan di .env. Keluar."))
         sys.exit(1)
 
-    print(f"\n[\u2714] Session Key Ditemukan di .env. Bypass Login State!")
+    print(TS.success(f"\n[\u2714] Session Key Ditemukan di .env. Bypass Login State!"))
 
     keyword = input("\n  \U0001f4e5 Masukkan Keyword Pencarian (Contoh: api/skills): ").strip()
     if not keyword:
