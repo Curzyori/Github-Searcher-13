@@ -1,4 +1,6 @@
 .agent
 .agent/
 .env
+.venv/
+__pycache__/
 results/*
