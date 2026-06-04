@@ -83,8 +83,8 @@ BANNER = (
 # ---------------------------------------------------------------------------
 
 def build_pattern(keyword: str) -> re.Pattern:
-    """Compile a regex that matches `{keyword}-<alphanum 10..50 chars>`."""
-    return re.compile(rf"{re.escape(keyword)}-[a-zA-Z0-9]{{10,50}}")
+    """Compile a regex that matches `{keyword}` followed by - or _ and 3+ token chars."""
+    return re.compile(rf"{re.escape(keyword)}[-_][a-zA-Z0-9_\-]{{3,}}")
 
 
 def sanitize_filename(raw: str) -> str:
@@ -568,118 +568,192 @@ async def run_engine_a(keyword: str, token: str, max_pages: int) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Engine B -- Session-based web scraping (Auto mode)
+# Engine B -- Session-based JSON scraping (Auto mode)
 # ---------------------------------------------------------------------------
 
-def parse_web_search_items(html: str) -> list[dict]:
+def extract_marks_from_html(html_lines: list[str]) -> set[str]:
     """
-    Parse GitHub's web search results HTML and return a list of dicts
-    with keys: owner, repo, filepath, repo_url.
+    Extract text content from <mark> tags in GitHub snippet HTML.
+
+    GitHub's internal search API wraps matched tokens inside
+    <mark>...</mark> tags.  This function parses those tags and
+    returns the raw token strings.
     """
-    soup = BeautifulSoup(html, "html.parser")
-    results: list[dict] = []
-
-    # GitHub wraps each code result in a div with data-testid="results-list"
-    # or individual result links. We look for links pointing to blob paths.
-    for link in soup.find_all("a", href=True):
-        href = link["href"]
-        # Pattern: /{owner}/{repo}/blob/{branch}/{path}
-        m = re.match(r"^/([^/]+)/([^/]+)/blob/[^/]+/(.+)$", href)
-        if m:
-            owner, repo, filepath = m.group(1), m.group(2), m.group(3)
-            results.append({
-                "owner": owner,
-                "repo": repo,
-                "filepath": filepath,
-                "repo_url": f"https://github.com/{owner}/{repo}",
-            })
-
-    # Deduplicate (same link can appear multiple times).
-    seen = set()
-    unique: list[dict] = []
-    for item in results:
-        key = (item["owner"], item["repo"], item["filepath"])
-        if key not in seen:
-            seen.add(key)
-            unique.append(item)
-
-    return unique
+    tokens: set[str] = set()
+    for line in html_lines:
+        if "<mark" not in line:
+            continue
+        soup = BeautifulSoup(line, "html.parser")
+        for mark in soup.find_all("mark"):
+            text = mark.get_text(strip=True)
+            if text and len(text) >= 3:
+                tokens.add(text)
+    return tokens
 
 
-async def web_search_page(
+def derive_output_dirname(query: str) -> str:
+    """Derive a filesystem-safe directory name from a search query."""
+    if query.startswith("/") and query.endswith("/"):
+        inner = query[1:-1]
+        dir_name = re.split(r'[\[\]{}()*+?\\^$|.]', inner)[0]
+        dir_name = dir_name.rstrip('-_')
+    else:
+        dir_name = query
+    dir_name = sanitize_filename(dir_name) if dir_name else "search_results"
+    return dir_name or "search_results"
+
+
+async def web_search_page_json(
     client: httpx.AsyncClient,
-    keyword: str,
+    query: str,
     page: int,
 ) -> list[dict] | None:
-    """Fetch one page from github.com/search?type=code."""
-    params = {"q": keyword, "type": "code", "p": page}
+    """
+    Fetch one page from github.com/search as JSON.
+
+    Sends the same XHR headers that GitHub's React frontend uses,
+    which makes the server return structured JSON (payload.results)
+    instead of rendered HTML.
+    """
+    params = {"q": query, "type": "code", "p": page}
+
+    json_headers = {
+        "Accept": "application/json",
+        "X-Requested-With": "XMLHttpRequest",
+    }
 
     try:
         resp = await client.get(
             "https://github.com/search",
             params=params,
+            headers=json_headers,
         )
     except httpx.RequestError as exc:
-        print(f"{TS.badge_alert()} Network error di page {page}: {TS.TEXT_RED}{exc}{TS.RESET}")
+        print(
+            f"{TS.badge_alert()} Network error di page {page}: "
+            f"{TS.TEXT_RED}{exc}{TS.RESET}"
+        )
         return None
 
     if resp.status_code in (401, 403):
-        print(f"{TS.badge_alert()} Session expired atau rate-limited ({resp.status_code}). Berhenti.")
+        print(
+            f"{TS.badge_alert()} Session expired / rate-limited "
+            f"({resp.status_code}). Berhenti."
+        )
         return None
     if resp.status_code != 200:
-        print(f"{TS.badge_alert()} HTTP {TS.TEXT_RED}{resp.status_code}{TS.RESET} di page {page}. Berhenti.")
+        print(
+            f"{TS.badge_alert()} HTTP {TS.TEXT_RED}{resp.status_code}"
+            f"{TS.RESET} di page {page}. Berhenti."
+        )
         return None
 
-    return parse_web_search_items(resp.text)
+    try:
+        data = resp.json()
+    except Exception:
+        print(f"{TS.badge_alert()} Response bukan JSON valid di page {page}.")
+        return None
+
+    payload = data.get("payload", {})
+    return payload.get("results", [])
 
 
-async def process_web_item(
+async def validate_raw_file(
     client: httpx.AsyncClient,
-    item: dict,
-    pattern: re.Pattern,
-    output_dir: Path,
-    global_seen: set,
-) -> int:
-    """Process a single web search result item (Engine B)."""
-    owner = item["owner"]
-    repo = item["repo"]
-    filepath = item["filepath"]
-    repo_url = item["repo_url"]
+    owner: str,
+    repo: str,
+    filepath: str,
+    ref: str,
+    tokens: set[str],
+) -> set[str]:
+    """
+    Validate extracted tokens by fetching the actual raw file.
 
+    Downloads the file from raw.githubusercontent.com and checks
+    whether each token string truly exists in the file body.
+    Returns only the subset of tokens that are confirmed present.
+    """
     raw_url = (
-        f"https://raw.githubusercontent.com/{owner}/{repo}/HEAD/{filepath}"
+        f"https://raw.githubusercontent.com/"
+        f"{owner}/{repo}/{ref}/{filepath}"
     )
 
     try:
         resp = await client.get(raw_url, follow_redirects=True)
-    except httpx.RequestError as exc:
-        print(f"{TS.badge_alert()} Gagal fetch {raw_url}: {TS.TEXT_RED}{exc}{TS.RESET}")
-        return 0
+    except httpx.RequestError:
+        return set()
 
-    if resp.status_code in (401, 403):
-        print(f"{TS.badge_alert()} Rate-limited / unauthorized ({resp.status_code}). Skip file.")
-        return 0
     if resp.status_code != 200:
-        return 0
+        return set()
 
     content = resp.text
+    return {t for t in tokens if t in content}
 
-    matches = set(pattern.findall(content))
-    if not matches:
+
+async def process_json_result(
+    client: httpx.AsyncClient,
+    result: dict,
+    pattern: re.Pattern | None,
+    output_dir: Path,
+    global_seen: set,
+    validate: bool = True,
+) -> int:
+    """
+    Process a single JSON search result from GitHub's internal API.
+
+    1. Extract tokens from <mark> tags in the snippet HTML.
+    2. Optionally apply a local regex filter.
+    3. Validate tokens by fetching the raw file (if enabled).
+    4. Save unique, validated tokens to a .txt output file.
+    """
+    repo_nwo = result.get("repo_nwo", "unknown/unknown")
+    parts = repo_nwo.split("/", 1)
+    owner = parts[0] if len(parts) > 0 else "unknown"
+    repo = parts[1] if len(parts) > 1 else "unknown"
+    filepath = result.get("path", "unknown")
+    commit_sha = result.get("commit_sha", "HEAD")
+    repo_url = f"https://github.com/{repo_nwo}"
+    line_num = result.get("line_number", 0)
+
+    # --- Step 1: Extract tokens from <mark> tags in snippets -----------
+    snippet_tokens: set[str] = set()
+    for snippet in result.get("snippets", []):
+        lines = snippet.get("lines", [])
+        marks = extract_marks_from_html(lines)
+        snippet_tokens.update(marks)
+
+    if not snippet_tokens:
         return 0
 
-    new_tokens = matches - global_seen
+    # --- Step 2: Optional local regex filter ---------------------------
+    if pattern:
+        snippet_tokens = {t for t in snippet_tokens if pattern.search(t)}
+        if not snippet_tokens:
+            return 0
+
+    # --- Step 3: Validate by fetching the raw file --------------------
+    if validate:
+        snippet_tokens = await validate_raw_file(
+            client, owner, repo, filepath, commit_sha, snippet_tokens
+        )
+        if not snippet_tokens:
+            return 0
+
+    # --- Step 4: Deduplicate against global seen set ------------------
+    new_tokens = snippet_tokens - global_seen
     if not new_tokens:
         return 0
 
     global_seen.update(new_tokens)
 
-    out_name = build_output_filename(owner, repo, filepath)
-    out_path = output_dir / out_name
+    # --- Step 5: Write output file ------------------------------------
+    base_name = f"{owner}_{repo}_{sanitize_filename(filepath)}_L{line_num}"
+    out_path = output_dir / (base_name + ".txt")
 
     header = (
         f"# Source Repo: {repo_url}\n"
         f"# File Path: {filepath}\n"
+        f"# Commit: {commit_sha}\n"
         "---\n"
     )
 
@@ -691,20 +765,39 @@ async def process_web_item(
     return len(new_tokens)
 
 
-async def run_engine_b(keyword: str, session_cookie: str, max_pages: int) -> None:
-    """Engine B (Auto): scrape github.com/search with a session cookie."""
-    output_dir = RESULTS_ROOT / keyword
+async def run_engine_b(
+    query: str,
+    session_cookie: str,
+    max_pages: int,
+    output_dir_name: str | None = None,
+) -> None:
+    """
+    Engine B (Auto): query github.com/search JSON API with a session cookie.
+
+    Supports both plain keyword queries and GitHub regex queries
+    (e.g. /sk-[a-zA-Z0-9]{10,50}/).
+    """
+    dir_name = output_dir_name or derive_output_dirname(query)
+    output_dir = RESULTS_ROOT / dir_name
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    pattern = build_pattern(keyword)
+    # For plain keywords, build a local regex filter for extra precision.
+    # For regex queries (wrapped in /…/), skip local filtering since
+    # GitHub's search engine already did the matching.
+    is_regex_query = query.startswith("/") and query.endswith("/")
+    pattern = None if is_regex_query else build_pattern(query)
 
     global_seen: set[str] = set()
     total_tokens = 0
     total_files = 0
 
-    print(f"\n[Engine B] Target keyword dikunci: '{keyword}'")
-    print(f"[Engine B] Pattern: {pattern.pattern}")
-    print(f"[Engine B] Output : {output_dir.resolve()}\n")
+    print(f"\n[Engine B] Target query  : '{query}'")
+    if pattern:
+        print(f"[Engine B] Local filter  : {pattern.pattern}")
+    else:
+        print(f"[Engine B] Mode          : Regex query (GitHub-side matching)")
+    print(f"[Engine B] Validasi      : Fetch raw file untuk konfirmasi")
+    print(f"[Engine B] Output        : {output_dir.resolve()}\n")
 
     async with httpx.AsyncClient(
         timeout=30.0,
@@ -718,36 +811,47 @@ async def run_engine_b(keyword: str, session_cookie: str, max_pages: int) -> Non
         follow_redirects=True,
     ) as client:
         for page in range(1, max_pages + 1):
-            items = await web_search_page(client, keyword, page)
-            if items is None:
+            results = await web_search_page_json(client, query, page)
+            if results is None:
                 break
-            if not items:
+            if not results:
                 print(f"[*] Page {page}: Tidak ada hasil lagi. Selesai.")
                 break
 
-            print(f"[*] Page {page}: Scanning {len(items)} blob target...")
+            print(f"[*] Page {page}: Scanning {len(results)} result target...")
 
             tasks = [
-                process_web_item(client, item, pattern, output_dir, global_seen)
-                for item in items
+                process_json_result(
+                    client, item, pattern, output_dir, global_seen,
+                    validate=True,
+                )
+                for item in results
             ]
-            results = await asyncio.gather(*tasks)
+            page_results = await asyncio.gather(*tasks)
 
-            page_tokens = sum(results)
-            page_files = sum(1 for r in results if r > 0)
+            page_tokens = sum(page_results)
+            page_files = sum(1 for r in page_results if r > 0)
             total_tokens += page_tokens
             total_files += page_files
 
             if page_files > 0:
-                print(f"{TS.badge_done()}    -> {TS.TEXT_GREEN}{page_files}{TS.RESET} file berhasil diekstrak | {TS.TEXT_GREEN}{page_tokens}{TS.RESET} token unik diamankan")
+                print(
+                    f"{TS.badge_done()}    -> "
+                    f"{TS.TEXT_GREEN}{page_files}{TS.RESET} file validated | "
+                    f"{TS.TEXT_GREEN}{page_tokens}{TS.RESET} token unik diamankan"
+                )
             else:
-                print(f"{TS.TEXT_MUTED}    -> {page_files} file berhasil diekstrak | {page_tokens} token unik diamankan{TS.RESET}")
+                print(
+                    f"{TS.TEXT_MUTED}    -> {page_files} file validated | "
+                    f"{page_tokens} token unik diamankan{TS.RESET}"
+                )
 
             if page < max_pages:
                 await asyncio.sleep(3.0)
 
     print(
-        f"\n{TS.badge_success()} Proses Selesai. {TS.TEXT_GREEN}{total_files}{TS.RESET} file dump dibuat, "
+        f"\n{TS.badge_success()} Proses Selesai. "
+        f"{TS.TEXT_GREEN}{total_files}{TS.RESET} file dump dibuat, "
         f"total {TS.TEXT_GREEN}{total_tokens}{TS.RESET} token unik."
     )
 
@@ -781,6 +885,63 @@ def interactive_menu() -> None:
         sys.exit(1)
 
 
+async def verify_session_and_get_user(session_cookie: str) -> dict | None:
+    """
+    Verify the user_session cookie validity and retrieve account information.
+    Returns a dict with keys 'username', 'name', 'email' if successful, or None.
+    """
+    headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+            "(KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+        ),
+        "Cookie": f"user_session={session_cookie}",
+    }
+
+    async with httpx.AsyncClient(timeout=15.0, headers=headers, follow_redirects=True) as client:
+        try:
+            # 1. Fetch profile settings to get Username & Full Name
+            profile_resp = await client.get("https://github.com/settings/profile")
+            if profile_resp.status_code != 200 or "/login" in str(profile_resp.url):
+                return None
+
+            soup_profile = BeautifulSoup(profile_resp.text, "html.parser")
+
+            # Username is typically inside <meta name="user-login" content="username">
+            meta_user = soup_profile.find("meta", {"name": "user-login"})
+            username = meta_user.get("content", "").strip() if meta_user else None
+
+            if not username:
+                username_elem = soup_profile.select_one("span.vcard-fullname")
+                username = username_elem.text.strip() if username_elem else "Unknown"
+
+            name_input = soup_profile.find("input", {"id": "user_profile_name"})
+            fullname = name_input.get("value", "").strip() if name_input else ""
+
+            # 2. Fetch email settings to get Primary Email
+            email_resp = await client.get("https://github.com/settings/emails")
+            email = "Not found (private/hidden)"
+            if email_resp.status_code == 200:
+                # Find all text matching emails using regex pattern.
+                emails_found = re.findall(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", email_resp.text)
+                if emails_found:
+                    # Filter out noreply emails if possible, but keep first one
+                    valid_emails = [e for e in emails_found if "noreply" not in e]
+                    if valid_emails:
+                        email = valid_emails[0]
+                    else:
+                        email = emails_found[0]
+
+            return {
+                "username": username or "Unknown",
+                "name": fullname or "Unknown",
+                "email": email
+            }
+
+        except Exception:
+            return None
+
+
 # ---------------------------------------------------------------------------
 # Mode handlers
 # ---------------------------------------------------------------------------
@@ -792,11 +953,23 @@ def handle_auto_mode() -> None:
     # Check if we already have a persisted session cookie.
     existing_session = read_env_value("GITHUB_SESSION")
 
+    session_cookie = None
     if existing_session:
-        print(f"\n{TS.badge_success()} Session Key Ditemukan di .env. Bypass Login State!")
-        session_cookie = existing_session
-    else:
-        print("\n[*] GITHUB_SESSION belum ada. Mulai login ...\n")
+        print(f"\n[*] Memverifikasi Session Key dari .env ...")
+        user_info = asyncio.run(verify_session_and_get_user(existing_session))
+        if user_info:
+            print(f"\n{TS.badge_success()} Session Key Aktif!")
+            print(f"  👤 Username : {TS.TEXT_GREEN}{user_info['username']}{TS.RESET}")
+            print(f"  🏷️ Nama     : {user_info['name']}")
+            print(f"  📧 Email    : {user_info['email']}")
+            session_cookie = existing_session
+        else:
+            print(f"\n{TS.badge_alert()} Session Key di .env kadaluarsa/tidak valid. Silakan login kembali.")
+            # Clear invalid session in .env
+            upsert_env("GITHUB_SESSION", "")
+
+    if not session_cookie:
+        print("\n[*] GITHUB_SESSION belum ada atau expired. Mulai login ...\n")
         email, password = prompt_credentials()
         print("\n[*] Mengirim login request ke GitHub ...")
 
@@ -810,14 +983,25 @@ def handle_auto_mode() -> None:
         upsert_env("GITHUB_SESSION", session_cookie)
         print(f"[*] Session cookie disimpan ke .env (GITHUB_SESSION).")
 
+        # Verify the newly created session
+        user_info = asyncio.run(verify_session_and_get_user(session_cookie))
+        if user_info:
+            print(f"\n{TS.badge_success()} Login Sukses & Session Aktif!")
+            print(f"  👤 Username : {TS.TEXT_GREEN}{user_info['username']}{TS.RESET}")
+            print(f"  🏷️ Nama     : {user_info['name']}")
+            print(f"  📧 Email    : {user_info['email']}")
+
     # Prompt for search query.
-    keyword = input("\n  \U0001f4e5 Masukkan Keyword Pencarian (Contoh: api/skills): ").strip()
-    if not keyword:
-        print("[!] Keyword kosong. Keluar.")
+    print("\n  💡 Tips: Bisa pakai regex GitHub, contoh: /sk-[a-zA-Z0-9]{10,50}/")
+    query = input("  📥 Masukkan Query Pencarian: ").strip()
+    if not query:
+        print("[!] Query kosong. Keluar.")
         sys.exit(1)
 
-    max_pages = 5
-    asyncio.run(run_engine_b(keyword, session_cookie, max_pages))
+    max_pages_input = input("  📄 Jumlah halaman (default 5): ").strip()
+    max_pages = int(max_pages_input) if max_pages_input.isdigit() else 5
+
+    asyncio.run(run_engine_b(query, session_cookie, max_pages))
 
 
 def handle_skip_mode() -> None:
