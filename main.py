@@ -593,8 +593,9 @@ def extract_marks_from_html(html_lines: list[str]) -> set[str]:
 
 def derive_output_dirname(query: str) -> str:
     """Derive a filesystem-safe directory name from a search query."""
-    if query.startswith("/") and query.endswith("/"):
-        inner = query[1:-1]
+    if query.startswith("/"):
+        parts = query.split("/")
+        inner = parts[1] if len(parts) > 1 else query
         dir_name = re.split(r'[\[\]{}()*+?\\^$|.]', inner)[0]
         dir_name = dir_name.rstrip('-_')
     else:
@@ -781,10 +782,7 @@ async def run_engine_b(
     output_dir = RESULTS_ROOT / dir_name
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # For plain keywords, build a local regex filter for extra precision.
-    # For regex queries (wrapped in /…/), skip local filtering since
-    # GitHub's search engine already did the matching.
-    is_regex_query = query.startswith("/") and query.endswith("/")
+    is_regex_query = query.startswith("/")
     pattern = None if is_regex_query else build_pattern(query)
 
     global_seen: set[str] = set()
@@ -810,44 +808,58 @@ async def run_engine_b(
         },
         follow_redirects=True,
     ) as client:
-        for page in range(1, max_pages + 1):
-            results = await web_search_page_json(client, query, page)
-            if results is None:
-                break
-            if not results:
-                print(f"[*] Page {page}: Tidak ada hasil lagi. Selesai.")
-                break
+        try:
+            for page in range(1, max_pages + 1):
+                results = await web_search_page_json(client, query, page)
+                if results is None:
+                    break
+                if not results:
+                    print(f"[*] Page {page}: Tidak ada hasil lagi. Selesai.")
+                    break
 
-            print(f"[*] Page {page}: Scanning {len(results)} result target...")
+                print(f"[*] Page {page}: Scanning {len(results)} result target...")
 
-            tasks = [
-                process_json_result(
-                    client, item, pattern, output_dir, global_seen,
-                    validate=True,
-                )
-                for item in results
-            ]
-            page_results = await asyncio.gather(*tasks)
+                tasks = [
+                    process_json_result(
+                        client, item, pattern, output_dir, global_seen,
+                        validate=True,
+                    )
+                    for item in results
+                ]
+                page_results = await asyncio.gather(*tasks)
 
-            page_tokens = sum(page_results)
-            page_files = sum(1 for r in page_results if r > 0)
-            total_tokens += page_tokens
-            total_files += page_files
+                page_tokens = sum(page_results)
+                page_files = sum(1 for r in page_results if r > 0)
+                total_tokens += page_tokens
+                total_files += page_files
 
-            if page_files > 0:
-                print(
-                    f"{TS.badge_done()}    -> "
-                    f"{TS.TEXT_GREEN}{page_files}{TS.RESET} file validated | "
-                    f"{TS.TEXT_GREEN}{page_tokens}{TS.RESET} token unik diamankan"
-                )
-            else:
-                print(
-                    f"{TS.TEXT_MUTED}    -> {page_files} file validated | "
-                    f"{page_tokens} token unik diamankan{TS.RESET}"
-                )
+                if page_files > 0:
+                    print(
+                        f"{TS.badge_done()}    -> "
+                        f"{TS.TEXT_GREEN}{page_files}{TS.RESET} file validated | "
+                        f"{TS.TEXT_GREEN}{page_tokens}{TS.RESET} token unik diamankan"
+                    )
+                else:
+                    print(
+                        f"{TS.TEXT_MUTED}    -> {page_files} file validated | "
+                        f"{page_tokens} token unik diamankan{TS.RESET}"
+                    )
 
-            if page < max_pages:
-                await asyncio.sleep(3.0)
+                if page < max_pages:
+                    await asyncio.sleep(3.0)
+        except KeyboardInterrupt:
+            print(f"\n{TS.badge_alert()} Proses dibatalkan oleh user. Menulis hasil sementara...")
+            all_txt_path = output_dir / "all.txt"
+            async with aiofiles.open(all_txt_path, mode="w", encoding="utf-8") as fh:
+                for token in sorted(global_seen):
+                    await fh.write(token + "\n")
+            print(f"{TS.badge_success()} Hasil sementara disimpan ke {all_txt_path.name}")
+            sys.exit(0)
+
+    all_txt_path = output_dir / "all.txt"
+    async with aiofiles.open(all_txt_path, mode="w", encoding="utf-8") as fh:
+        for token in sorted(global_seen):
+            await fh.write(token + "\n")
 
     print(
         f"\n{TS.badge_success()} Proses Selesai. "
@@ -991,12 +1003,21 @@ def handle_auto_mode() -> None:
             print(f"  🏷️ Nama     : {user_info['name']}")
             print(f"  📧 Email    : {user_info['email']}")
 
-    # Prompt for search query.
-    print("\n  💡 Tips: Bisa pakai regex GitHub, contoh: /sk-[a-zA-Z0-9]{10,50}/")
-    query = input("  📥 Masukkan Query Pencarian: ").strip()
-    if not query:
-        print("[!] Query kosong. Keluar.")
+    keyword = input("  📥 Masukkan Keyword Utama (Contoh: designs/skills): ").strip()
+    if not keyword:
+        print("[!] Keyword kosong. Keluar.")
         sys.exit(1)
+
+    max_len_input = input("  📏 Batas Maksimal Karakter Token (Default 50): ").strip()
+    max_len = max_len_input if max_len_input else "50"
+
+    ext_input = input("  📁 Target Ekstensi File (Contoh: py/js/ts atau kosongkan untuk semua): ").strip()
+
+    query = f"/{keyword}-[a-zA-Z0-9]{{10,{max_len}}}/ NOT path:README.md NOT path:*.md NOT path:*.txt NOT path:*.json"
+    if ext_input:
+        query += f" extension:{ext_input}"
+
+    print(f"[⚙️ CORE] Compiled GitHub Regex Query: '{query}'")
 
     max_pages_input = input("  📄 Jumlah halaman (default 5): ").strip()
     max_pages = int(max_pages_input) if max_pages_input.isdigit() else 5
