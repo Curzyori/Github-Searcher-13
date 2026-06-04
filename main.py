@@ -142,63 +142,98 @@ def upsert_env(key: str, value: str) -> None:
 # Authentication -- GitHub web login handshake
 # ---------------------------------------------------------------------------
 
-async def github_login(email: str, password: str, otp: str | None) -> str | None:
+async def github_login(email: str, password: str) -> str | None:
     """
-    Simulate a browser login to github.com.
+    Full browser-emulated login to github.com with multi-stage 2FA support.
 
-    1. GET /login to grab the authenticity_token.
-    2. POST /session with credentials (+ optional OTP header).
-    3. Return the user_session cookie value on success.
+    1. GET /login, harvest every hidden input from the session form.
+    2. POST /session with harvested payload + browser emulation fields.
+    3. If GitHub responds with a 302 to the two-factor challenge URL,
+       follow that redirect, extract the new authenticity_token, prompt
+       the user for an OTP code, and POST the 2FA verification.
+    4. Return the user_session cookie value on success.
     """
+    ua_header = (
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+    )
+
     async with httpx.AsyncClient(
-        follow_redirects=True,
+        follow_redirects=False,
         timeout=30.0,
-        headers={
-            "User-Agent": (
-                "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-                "(KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
-            ),
-        },
+        headers={"User-Agent": ua_header},
     ) as client:
-        # -- Step 1: GET the login page for the CSRF token ----------------
+
+        # ---------------------------------------------------------------
+        # Stage 1: GET /login and dynamically harvest form inputs
+        # ---------------------------------------------------------------
         try:
             login_page = await client.get(GITHUB_LOGIN_URL)
         except httpx.RequestError as exc:
-            print(f"{TS.badge_alert()} Gagal konek ke GitHub login page: {TS.TEXT_RED}{exc}{TS.RESET}")
+            print(
+                f"{TS.badge_alert()} Gagal konek ke GitHub login page: "
+                f"{TS.TEXT_RED}{exc}{TS.RESET}"
+            )
             return None
 
+        # Follow any initial redirects manually (GitHub sometimes 302s
+        # the bare /login URL before serving the actual page).
+        while login_page.status_code in (301, 302):
+            redirect_url = login_page.headers.get("Location", "")
+            if not redirect_url:
+                break
+            if redirect_url.startswith("/"):
+                redirect_url = f"https://github.com{redirect_url}"
+            try:
+                login_page = await client.get(redirect_url)
+            except httpx.RequestError as exc:
+                print(
+                    f"{TS.badge_alert()} Redirect gagal: "
+                    f"{TS.TEXT_RED}{exc}{TS.RESET}"
+                )
+                return None
+
         if login_page.status_code != 200:
-            print(f"{TS.badge_alert()} Login page returned HTTP {TS.TEXT_RED}{login_page.status_code}{TS.RESET}")
+            print(
+                f"{TS.badge_alert()} Login page returned HTTP "
+                f"{TS.TEXT_RED}{login_page.status_code}{TS.RESET}"
+            )
             return None
 
         soup = BeautifulSoup(login_page.text, "html.parser")
-        token_input = soup.find("input", attrs={"name": "authenticity_token"})
-        if token_input is None:
-            print(f"{TS.badge_alert()} Tidak bisa menemukan authenticity_token di login page.")
+        login_form = soup.select_one('form[action="/session"]')
+        if login_form is None:
+            print(f"{TS.badge_alert()} Tidak bisa menemukan form login di halaman.")
             return None
 
-        authenticity_token = token_input.get("value", "")
+        # Harvest every <input> inside the form into a baseline payload.
+        form_data: dict[str, str] = {}
+        for input_tag in login_form.find_all("input"):
+            field_name = input_tag.get("name")
+            if field_name:
+                form_data[field_name] = input_tag.get("value", "")
 
-        # -- Step 2: POST credentials ------------------------------------
-        form_data = {
-            "commit": "Sign in",
-            "authenticity_token": authenticity_token,
+        # Inject mandatory browser emulation fields on top of the
+        # harvested baseline. These overwrite any matching keys.
+        form_data.update({
             "login": email,
             "password": password,
-            "trusted_device": "",
+            "commit": "Sign in",
+            "webauthn-conditional": "undefined",
+            "javascript-support": "true",
             "webauthn-support": "supported",
-            "webauthn-iuvpaa-support": "unsupported",
-            "return_to": "",
-            "timestamp": "",
-            "timestamp_secret": "",
-        }
+            "webauthn-iuvpaa-support": "supported",
+            "return_to": "https://github.com/login",
+        })
 
+        # ---------------------------------------------------------------
+        # Stage 2: POST /session (follow_redirects=False to inspect 302)
+        # ---------------------------------------------------------------
         post_headers = {
             "Content-Type": "application/x-www-form-urlencoded",
             "Referer": GITHUB_LOGIN_URL,
+            "Origin": "https://github.com",
         }
-        if otp:
-            post_headers["X-GitHub-OTP"] = otp
 
         try:
             session_resp = await client.post(
@@ -207,19 +242,157 @@ async def github_login(email: str, password: str, otp: str | None) -> str | None
                 headers=post_headers,
             )
         except httpx.RequestError as exc:
-            print(f"{TS.badge_alert()} Gagal POST ke /session: {TS.TEXT_RED}{exc}{TS.RESET}")
+            print(
+                f"{TS.badge_alert()} Gagal POST ke /session: "
+                f"{TS.TEXT_RED}{exc}{TS.RESET}"
+            )
             return None
 
-        # -- Step 3: fish out user_session cookie -------------------------
+        # ---------------------------------------------------------------
+        # Stage 3: Multi-stage 2FA lifecycle
+        # ---------------------------------------------------------------
+        if session_resp.status_code == 302:
+            redirect_location = session_resp.headers.get("Location", "")
+
+            if "two-factor" in redirect_location:
+                # Build the full challenge URL if GitHub returned a relative path.
+                if redirect_location.startswith("/"):
+                    challenge_url = f"https://github.com{redirect_location}"
+                else:
+                    challenge_url = redirect_location
+
+                print(f"\n[*] GitHub memerlukan verifikasi 2FA ...")
+                print(f"[*] Mengambil halaman challenge: {challenge_url}")
+
+                try:
+                    twofa_page = await client.get(challenge_url)
+                except httpx.RequestError as exc:
+                    print(
+                        f"{TS.badge_alert()} Gagal GET halaman 2FA: "
+                        f"{TS.TEXT_RED}{exc}{TS.RESET}"
+                    )
+                    return None
+
+                # Follow redirects on the 2FA page too, if any.
+                while twofa_page.status_code in (301, 302):
+                    next_url = twofa_page.headers.get("Location", "")
+                    if not next_url:
+                        break
+                    if next_url.startswith("/"):
+                        next_url = f"https://github.com{next_url}"
+                    try:
+                        twofa_page = await client.get(next_url)
+                    except httpx.RequestError as exc:
+                        print(
+                            f"{TS.badge_alert()} Redirect 2FA gagal: "
+                            f"{TS.TEXT_RED}{exc}{TS.RESET}"
+                        )
+                        return None
+
+                twofa_soup = BeautifulSoup(twofa_page.text, "html.parser")
+                twofa_token_input = twofa_soup.find(
+                    "input", attrs={"name": "authenticity_token"}
+                )
+                if twofa_token_input is None:
+                    print(
+                        f"{TS.badge_alert()} Tidak bisa menemukan "
+                        f"authenticity_token di halaman 2FA."
+                    )
+                    return None
+
+                twofa_token = twofa_token_input.get("value", "")
+
+                # Prompt the user for the verification code.
+                otp_code = input("  [?] Masukkan kode 2FA / OTP: ").strip()
+                if not otp_code:
+                    print(f"{TS.badge_alert()} Kode 2FA kosong. Membatalkan login.")
+                    return None
+
+                twofa_payload = {
+                    "authenticity_token": twofa_token,
+                    "app_otp": otp_code,
+                }
+
+                twofa_headers = {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "Referer": challenge_url,
+                    "Origin": "https://github.com",
+                }
+
+                print("[*] Mengirim verifikasi 2FA ...")
+
+                try:
+                    twofa_resp = await client.post(
+                        "https://github.com/sessions/two-factor",
+                        data=twofa_payload,
+                        headers=twofa_headers,
+                    )
+                except httpx.RequestError as exc:
+                    print(
+                        f"{TS.badge_alert()} Gagal POST 2FA: "
+                        f"{TS.TEXT_RED}{exc}{TS.RESET}"
+                    )
+                    return None
+
+                # Check for 2FA error in the response body.
+                if twofa_resp.status_code == 200:
+                    error_soup = BeautifulSoup(twofa_resp.text, "html.parser")
+                    flash_alert = error_soup.select_one(".js-flash-alert")
+                    if flash_alert:
+                        alert_text = flash_alert.get_text(strip=True)
+                        print(
+                            f"{TS.badge_alert()} Two-factor authentication failed"
+                            f" | {alert_text}"
+                        )
+                        return None
+
+                # After successful 2FA, check for the session cookie.
+                for cookie in client.cookies.jar:
+                    if cookie.name == "user_session":
+                        return cookie.value
+
+                # If the 2FA POST itself returns a 302, that usually
+                # means success. Follow and grab the cookie.
+                if twofa_resp.status_code == 302:
+                    for cookie in client.cookies.jar:
+                        if cookie.name == "user_session":
+                            return cookie.value
+
+                print(
+                    f"{TS.badge_alert()} Two-factor authentication failed. "
+                    f"Tidak ada session cookie setelah 2FA."
+                )
+                return None
+
+        # ---------------------------------------------------------------
+        # Stage 4: Non-2FA path, check for session cookie or errors
+        # ---------------------------------------------------------------
+
+        # Successful login usually returns a 302 redirect.
+        if session_resp.status_code == 302:
+            for cookie in client.cookies.jar:
+                if cookie.name == "user_session":
+                    return cookie.value
+
+        # If the response is 200, GitHub re-rendered the login page
+        # with an error message. Inspect for .js-flash-alert.
+        if session_resp.status_code == 200:
+            error_soup = BeautifulSoup(session_resp.text, "html.parser")
+            flash_alert = error_soup.select_one(".js-flash-alert")
+            if flash_alert:
+                alert_text = flash_alert.get_text(strip=True)
+                print(
+                    f"{TS.badge_alert()} Incorrect username or password"
+                    f" | {alert_text}"
+                )
+                return None
+
+        # Fallback: cookie might have been set even without a clean 302.
         for cookie in client.cookies.jar:
             if cookie.name == "user_session":
                 return cookie.value
 
-        # If we landed on a 2FA challenge page, report it.
-        if "two-factor" in str(session_resp.url):
-            print(f"{TS.badge_alert()} GitHub minta 2FA tapi OTP tidak valid atau kosong.")
-        else:
-            print(f"{TS.badge_alert()} Login gagal. Periksa email/password kamu.")
+        print(f"{TS.badge_alert()} Login gagal. Periksa email/password kamu.")
         return None
 
 
@@ -583,12 +756,11 @@ async def run_engine_b(keyword: str, session_cookie: str, max_pages: int) -> Non
 # Interactive CLI menu
 # ---------------------------------------------------------------------------
 
-def prompt_credentials() -> tuple[str, str, str | None]:
+def prompt_credentials() -> tuple[str, str]:
     """Prompt user for GitHub credentials in the terminal."""
     email = input("  email/username: ").strip()
     password = getpass.getpass("  password: ")
-    otp = input("  2fa (jika user menggunakan 2fa): ").strip() or None
-    return email, password, otp
+    return email, password
 
 
 def interactive_menu() -> None:
@@ -625,10 +797,10 @@ def handle_auto_mode() -> None:
         session_cookie = existing_session
     else:
         print("\n[*] GITHUB_SESSION belum ada. Mulai login ...\n")
-        email, password, otp = prompt_credentials()
+        email, password = prompt_credentials()
         print("\n[*] Mengirim login request ke GitHub ...")
 
-        session_cookie = asyncio.run(github_login(email, password, otp))
+        session_cookie = asyncio.run(github_login(email, password))
 
         if not session_cookie:
             print(f"{TS.badge_alert()} Gagal mendapatkan session cookie. Keluar.")
