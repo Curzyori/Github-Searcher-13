@@ -3,4 +3,6 @@
 .env
 .venv/
 __pycache__/
-results/*
+results/kode/*
+results/repo/*
+

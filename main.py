@@ -32,6 +32,8 @@ GITHUB_API_BASE = "https://api.github.com"
 GITHUB_LOGIN_URL = "https://github.com/login"
 GITHUB_SESSION_URL = "https://github.com/session"
 PER_PAGE = 30
+RESULTS_REPO_DIR = RESULTS_ROOT / "repo"
+RESULTS_CODE_DIR = RESULTS_ROOT / "kode"
 
 
 # ---------------------------------------------------------------------------
@@ -907,6 +909,383 @@ async def run_engine_b(
     )
 
 
+
+# ---------------------------------------------------------------------------
+# Repo search engine (merged from repo.py)
+# ---------------------------------------------------------------------------
+
+def clean_html(text: str) -> str:
+    """Remove HTML tags from a string."""
+    return re.sub(r'<[^>]*>', '', text)
+
+
+async def scrape_repo_page(
+    client: httpx.AsyncClient, query: str, page: int,
+) -> list[str] | None:
+    """Scrape a single page of repository search results via web session."""
+    params = {"q": query, "type": "repositories", "p": page}
+
+    try:
+        resp = await client.get("https://github.com/search", params=params)
+    except httpx.RequestError as exc:
+        print(f"{TS.badge_alert()} Network error page {page}: {TS.TEXT_RED}{exc}{TS.RESET}")
+        return None
+
+    if resp.status_code == 429:
+        print(f"{TS.badge_alert()} Rate-limited (429) di page {page}.")
+        return None
+    if resp.status_code in (401, 403):
+        print(f"{TS.badge_alert()} Unauthorized ({resp.status_code}) di page {page}.")
+        return None
+    if resp.status_code != 200:
+        print(f"{TS.badge_alert()} HTTP {TS.TEXT_RED}{resp.status_code}{TS.RESET} page {page}.")
+        return None
+
+    try:
+        data = resp.json()
+    except Exception:
+        print(f"{TS.badge_alert()} Respon bukan JSON valid di page {page}.")
+        return None
+
+    results = data.get("payload", {}).get("results", [])
+    repos = []
+    for item in results:
+        hl_name = item.get("hl_name", "")
+        if hl_name:
+            repos.append(f"github.com/{clean_html(hl_name)}")
+        else:
+            rd = item.get("repo", {}).get("repository", {})
+            owner = rd.get("owner_login")
+            name = rd.get("name")
+            if owner and name:
+                repos.append(f"github.com/{owner}/{name}")
+    return repos
+
+
+async def api_search_repos(
+    client: httpx.AsyncClient, query: str, page: int,
+) -> list[str] | None:
+    """Search repositories using the GitHub REST API with token auth."""
+    params = {"q": query, "page": page, "per_page": 30}
+
+    try:
+        resp = await client.get(
+            f"{GITHUB_API_BASE}/search/repositories", params=params,
+        )
+    except httpx.RequestError as exc:
+        print(f"{TS.badge_alert()} Network error page {page}: {TS.TEXT_RED}{exc}{TS.RESET}")
+        return None
+
+    if resp.status_code == 401:
+        print(f"{TS.badge_alert()} Token tidak valid (HTTP 401).")
+        return None
+    if resp.status_code == 403:
+        reset_ts = resp.headers.get("X-RateLimit-Reset", "unknown")
+        print(f"{TS.badge_alert()} Rate-limited (403). Reset: {TS.TEXT_RED}{reset_ts}{TS.RESET}.")
+        return None
+    if resp.status_code != 200:
+        print(f"{TS.badge_alert()} HTTP {TS.TEXT_RED}{resp.status_code}{TS.RESET} page {page}.")
+        return None
+
+    try:
+        data = resp.json()
+    except Exception:
+        print(f"{TS.badge_alert()} Respon bukan JSON valid di page {page}.")
+        return None
+
+    items = data.get("items", [])
+    return [f"github.com/{it['full_name']}" for it in items if it.get("full_name")]
+
+
+# ---------------------------------------------------------------------------
+# Code search utilities
+# ---------------------------------------------------------------------------
+
+def parse_repo_list_from_results() -> tuple[list[Path], list[str]]:
+    """Read all repo files from results/repo/ and return (file_list, repo_list)."""
+    if not RESULTS_REPO_DIR.exists():
+        return [], []
+
+    repo_files = sorted(RESULTS_REPO_DIR.glob("*.txt"))
+    if not repo_files:
+        return [], []
+
+    all_repos: list[str] = []
+    for f in repo_files:
+        for line in f.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if line and not line.startswith("#"):
+                all_repos.append(line)
+
+    return repo_files, all_repos
+
+
+def extract_nwo(repo_url: str) -> str | None:
+    """Extract 'owner/repo' from a URL like 'github.com/owner/repo'."""
+    url = repo_url.strip()
+    for prefix in ("https://", "http://", "github.com/"):
+        if url.startswith(prefix):
+            url = url[len(prefix):]
+    parts = url.split("/")
+    if len(parts) >= 2 and parts[0] and parts[1]:
+        return f"{parts[0]}/{parts[1]}"
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Feature: search repos
+# ---------------------------------------------------------------------------
+
+async def search_repos_flow(mode: str, auth_headers: dict) -> None:
+    """Interactive flow for searching GitHub repositories."""
+    try:
+        query = input(
+            "\n  \U0001f4e5 Masukkan Query Pencarian Repo (Default: antigravity): "
+        ).strip()
+        if not query:
+            query = "antigravity"
+        pages_input = input(
+            "  \U0001f4c4 Jumlah halaman (Default: 1): "
+        ).strip()
+        max_pages = (
+            int(pages_input)
+            if pages_input.isdigit() and int(pages_input) > 0
+            else 1
+        )
+    except KeyboardInterrupt:
+        print("\n[*] Dibatalkan.")
+        return
+
+    RESULTS_REPO_DIR.mkdir(parents=True, exist_ok=True)
+    output_file = RESULTS_REPO_DIR / f"{sanitize_filename(query)}.txt"
+
+    print(f"\n[\u2699\ufe0f CORE] Target Query: '{query}'")
+    print(f"[*] Output: {output_file.resolve()}")
+
+    all_repos: list[str] = []
+
+    try:
+        async with httpx.AsyncClient(
+            headers=auth_headers, timeout=30.0, follow_redirects=True,
+        ) as client:
+            for page in range(1, max_pages + 1):
+                print(f"[*] Scraping Page {page}...")
+
+                if mode == "auto":
+                    repos = await scrape_repo_page(client, query, page)
+                else:
+                    repos = await api_search_repos(client, query, page)
+
+                if repos is None:
+                    print(f"[!] Error di page {page}. Berhenti.")
+                    break
+                if not repos:
+                    print(f"[*] Page {page}: tidak ada hasil lagi. Selesai.")
+                    break
+
+                print(
+                    f"{TS.badge_done()} "
+                    f"{TS.TEXT_GREEN}{len(repos)}{TS.RESET} repo ditemukan."
+                )
+                for repo in repos:
+                    print(f"  \U0001f517 {repo}")
+                    all_repos.append(repo)
+
+                if page < max_pages:
+                    await asyncio.sleep(2.5)
+    except KeyboardInterrupt:
+        print(f"\n{TS.badge_alert()} Dibatalkan oleh user.")
+
+    if all_repos:
+        with open(output_file, "w", encoding="utf-8") as f:
+            for repo in all_repos:
+                f.write(repo + "\n")
+        print(
+            f"\n{TS.badge_success()} "
+            f"{TS.TEXT_GREEN}{len(all_repos)}{TS.RESET} "
+            f"repositori tersimpan di "
+            f"{TS.TEXT_GREEN}{output_file}{TS.RESET}"
+        )
+    else:
+        print(f"\n{TS.badge_alert()} Tidak ada repositori yang ditemukan.")
+
+
+# ---------------------------------------------------------------------------
+# Feature: search code across saved repos
+# ---------------------------------------------------------------------------
+
+async def search_code_flow(mode: str, auth_headers: dict) -> None:
+    """Interactive flow for searching code across previously saved repos."""
+
+    # ---- Check for existing repos ------------------------------------
+    repo_files, repo_list = parse_repo_list_from_results()
+
+    if not repo_list:
+        print(
+            f"\n{TS.badge_alert()} Repo tidak ditemukan di "
+            f"{RESULTS_REPO_DIR}"
+        )
+        print("  Silahkan cari repo terlebih dahulu.\n")
+        print("  1. Cari Repo")
+        print("  2. Kembali")
+        try:
+            sub = input("\n  [?] Pilih [1/2]: ").strip()
+        except KeyboardInterrupt:
+            print("\n[*] Dibatalkan.")
+            return
+        if sub == "1":
+            await search_repos_flow(mode, auth_headers)
+            repo_files, repo_list = parse_repo_list_from_results()
+            if not repo_list:
+                print(
+                    f"{TS.badge_alert()} "
+                    f"Masih tidak ada repo. Kembali ke menu."
+                )
+                return
+        else:
+            return
+
+    # ---- Extract unique owner/repo -----------------------------------
+    nwo_set: set[str] = set()
+    for r in repo_list:
+        nwo = extract_nwo(r)
+        if nwo:
+            nwo_set.add(nwo)
+    nwo_list = sorted(nwo_set)
+
+    print(
+        f"\n  \U0001f4c2 "
+        f"{TS.TEXT_GREEN}{len(repo_files)}{TS.RESET} file"
+    )
+    print(
+        f"  \U0001f4e6 "
+        f"{TS.TEXT_GREEN}{len(nwo_list)}{TS.RESET} repo terdeteksi"
+    )
+
+    # ---- Get code query and extension filter -------------------------
+    try:
+        code_query = input("\n  \U0001f4e5 Masukkan Query Code: ").strip()
+        if not code_query:
+            print("  Query kosong. Kembali ke menu.")
+            return
+        ext_input = input(
+            "  \U0001f4c1 Filter ekstensi "
+            "(py,txt,md,etc. kosong = all): "
+        ).strip()
+    except KeyboardInterrupt:
+        print("\n[*] Dibatalkan.")
+        return
+
+    extensions: list[str] = []
+    if ext_input:
+        for e in re.split(r"[,\s]+", ext_input):
+            e = e.strip().lstrip(".")
+            if e:
+                extensions.append(e)
+
+    RESULTS_CODE_DIR.mkdir(parents=True, exist_ok=True)
+    output_file = RESULTS_CODE_DIR / f"{sanitize_filename(code_query)}.txt"
+
+    print(f"\n[\u2699\ufe0f CORE] Query: '{code_query}'")
+    if extensions:
+        print(f"[\u2699\ufe0f CORE] Filter: {', '.join(extensions)}")
+    print(f"[\u2699\ufe0f CORE] Scanning {len(nwo_list)} repo...")
+    print(f"[*] Output: {output_file.resolve()}\n")
+
+    all_results: list[str] = []
+    seen: set[str] = set()
+
+    batch_size = 5
+    batches = [
+        nwo_list[i : i + batch_size]
+        for i in range(0, len(nwo_list), batch_size)
+    ]
+
+    try:
+        async with httpx.AsyncClient(
+            headers=auth_headers, timeout=30.0, follow_redirects=True,
+        ) as client:
+            for bi, batch in enumerate(batches):
+                repo_quals = " ".join(f"repo:{nwo}" for nwo in batch)
+                if extensions:
+                    ext_quals = " ".join(
+                        f"extension:{e}" for e in extensions
+                    )
+                    full_q = f"{code_query} {repo_quals} {ext_quals}"
+                else:
+                    full_q = f"{code_query} {repo_quals}"
+
+                print(
+                    f"[*] Batch {bi + 1}/{len(batches)}: "
+                    f"{len(batch)} repo..."
+                )
+
+                for page in range(1, 4):  # max 3 pages per batch
+                    if mode == "auto":
+                        items = await web_search_page_json(
+                            client, full_q, page,
+                        )
+                    else:
+                        items = await api_search_page(
+                            client, full_q, page, auth_headers,
+                        )
+
+                    if items is None or not items:
+                        break
+
+                    count = 0
+                    for item in items:
+                        if mode == "auto":
+                            nwo = item.get("repo_nwo", "")
+                            fpath = item.get("path", "")
+                        else:
+                            rd = item.get("repository", {})
+                            nwo = rd.get("full_name", "")
+                            fpath = item.get("path", "")
+
+                        key = f"{nwo}/{fpath}"
+                        if key not in seen:
+                            seen.add(key)
+                            all_results.append(
+                                f"github.com/{nwo}/{fpath}"
+                            )
+                            count += 1
+
+                    if count > 0:
+                        print(
+                            f"{TS.badge_done()}    -> "
+                            f"{TS.TEXT_GREEN}{count}{TS.RESET} "
+                            f"file ditemukan"
+                        )
+                    else:
+                        print(
+                            f"{TS.TEXT_MUTED}    -> "
+                            f"0 file baru{TS.RESET}"
+                        )
+
+                    if page < 3:
+                        await asyncio.sleep(3.0)
+
+                if bi < len(batches) - 1:
+                    await asyncio.sleep(2.0)
+
+    except KeyboardInterrupt:
+        print(f"\n{TS.badge_alert()} Dibatalkan oleh user.")
+
+    if all_results:
+        with open(output_file, "w", encoding="utf-8") as f:
+            for line in all_results:
+                f.write(line + "\n")
+        print(
+            f"\n{TS.badge_success()} "
+            f"{TS.TEXT_GREEN}{len(all_results)}{TS.RESET} "
+            f"hasil tersimpan di "
+            f"{TS.TEXT_GREEN}{output_file}{TS.RESET}"
+        )
+    else:
+        print(f"\n{TS.badge_alert()} Tidak ada hasil code yang ditemukan.")
+
+
 # ---------------------------------------------------------------------------
 # Interactive CLI menu
 # ---------------------------------------------------------------------------
@@ -918,22 +1297,29 @@ def prompt_credentials() -> tuple[str, str]:
     return email, password
 
 
-def interactive_menu() -> None:
-    """Top-level interactive menu that drives the whole session."""
-    print(BANNER)
-    print("  1. Auto Pilot  -> Sesi Browser (.env Session)")
-    print("  2. Fast Skip   -> Direct Token (GITHUB_TOKEN)")
-    print()
+async def main_menu_loop(mode: str, auth_headers: dict) -> None:
+    """Post-login main menu loop."""
+    while True:
+        print(f"\n{'=' * 45}")
+        print("  1. \U0001f50d Cari Repo")
+        print("  2. \U0001f4dd Cari Kode")
+        print("  3. \u274c Exit")
 
-    choice = input("  [?] Pilih Mode Eksekusi [1/2]: ").strip()
+        try:
+            choice = input("\n  [?] Pilih Menu [1/2/3]: ").strip()
+        except KeyboardInterrupt:
+            print("\n[*] Keluar.")
+            break
 
-    if choice == "1":
-        handle_auto_mode()
-    elif choice == "2":
-        handle_skip_mode()
-    else:
-        print(f"{TS.badge_alert()} Pilihan tidak valid. Keluar.")
-        sys.exit(1)
+        if choice == "1":
+            await search_repos_flow(mode, auth_headers)
+        elif choice == "2":
+            await search_code_flow(mode, auth_headers)
+        elif choice == "3":
+            print("[*] Keluar. Sampai jumpa!")
+            break
+        else:
+            print(f"{TS.badge_alert()} Pilihan tidak valid.")
 
 
 async def verify_session_and_get_user(session_cookie: str) -> dict | None:
@@ -1001,22 +1387,20 @@ def handle_auto_mode() -> None:
     """Auto mode: authenticate via web login or reuse an existing session."""
     load_dotenv(ENV_PATH)
 
-    # Check if we already have a persisted session cookie.
     existing_session = read_env_value("GITHUB_SESSION")
-
     session_cookie = None
+
     if existing_session:
         print(f"\n[*] Memverifikasi Session Key dari .env ...")
         user_info = asyncio.run(verify_session_and_get_user(existing_session))
         if user_info:
             print(f"\n{TS.badge_success()} Session Key Ditemukan di .env. Bypass Login State!")
-            print(f"  👤 Username : {TS.TEXT_GREEN}{user_info['username']}{TS.RESET}")
-            print(f"  🏷️ Nama     : {user_info['name']}")
-            print(f"  📧 Email    : {user_info['email']}")
+            print(f"  \U0001f464 Username : {TS.TEXT_GREEN}{user_info['username']}{TS.RESET}")
+            print(f"  \U0001f3f7\ufe0f Nama     : {user_info['name']}")
+            print(f"  \U0001f4e7 Email    : {user_info['email']}")
             session_cookie = existing_session
         else:
             print(f"\n{TS.badge_alert()} Session Key di .env kadaluarsa/tidak valid. Silakan login kembali.")
-            # Clear invalid session in .env
             upsert_env("GITHUB_SESSION", "")
 
     if not session_cookie:
@@ -1030,39 +1414,27 @@ def handle_auto_mode() -> None:
             print(f"{TS.badge_alert()} Gagal mendapatkan session cookie. Keluar.")
             sys.exit(1)
 
-        # Persist to .env so subsequent runs skip the login step.
         upsert_env("GITHUB_SESSION", session_cookie)
         print(f"[*] Session cookie disimpan ke .env (GITHUB_SESSION).")
 
-        # Verify the newly created session
         user_info = asyncio.run(verify_session_and_get_user(session_cookie))
         if user_info:
             print(f"\n{TS.badge_success()} Login Sukses & Session Aktif!")
-            print(f"  👤 Username : {TS.TEXT_GREEN}{user_info['username']}{TS.RESET}")
-            print(f"  🏷️ Nama     : {user_info['name']}")
-            print(f"  📧 Email    : {user_info['email']}")
+            print(f"  \U0001f464 Username : {TS.TEXT_GREEN}{user_info['username']}{TS.RESET}")
+            print(f"  \U0001f3f7\ufe0f Nama     : {user_info['name']}")
+            print(f"  \U0001f4e7 Email    : {user_info['email']}")
 
-    # Prompt for search query.
-    print("\n  💡 Tips: Bisa pakai regex GitHub, contoh: /sk-[a-zA-Z0-9]{10,50}/")
-    query = input("  📥 Masukkan Query Pencarian: ").strip()
-    if not query:
-        print("[!] Query kosong. Keluar.")
-        sys.exit(1)
+    auth_headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+            "(KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+        ),
+        "Accept": "application/json",
+        "X-Requested-With": "XMLHttpRequest",
+        "Cookie": f"user_session={session_cookie}",
+    }
 
-    final_query = query
-    print(f"[⚙️ CORE] Compiled GitHub Regex Query: '{query}'")
-
-    max_pages = 5
-
-    # Determine if the user's initial query was a regex query
-    is_regex = query.startswith("/") and query.endswith("/")
-    asyncio.run(run_engine_b(
-        final_query,
-        session_cookie,
-        max_pages,
-        is_regex_query=is_regex,
-        base_query=query
-    ))
+    asyncio.run(main_menu_loop("auto", auth_headers))
 
 
 def handle_skip_mode() -> None:
@@ -1071,18 +1443,44 @@ def handle_skip_mode() -> None:
 
     token = os.getenv("GITHUB_TOKEN") or read_env_value("GITHUB_TOKEN")
     if not token:
-        print(f"{TS.badge_alert()} GITHUB_TOKEN tidak ditemukan di .env. Keluar.")
+        print(f"{TS.badge_alert()} GITHUB_TOKEN tidak ditemukan di .env.")
+        token = input("  \U0001f511 Masukkan GITHUB_TOKEN: ").strip()
+        if not token:
+            print("[!] Token kosong. Keluar.")
+            sys.exit(1)
+        upsert_env("GITHUB_TOKEN", token)
+        print(f"[*] Token disimpan ke .env.")
+
+    print(f"\n{TS.badge_success()} API Key Ditemukan menggunakan github token Login State!")
+
+    auth_headers = {
+        "Accept": "application/vnd.github.v3+json",
+        "Authorization": f"Bearer {token}",
+        "User-Agent": (
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+            "(KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+        ),
+    }
+
+    asyncio.run(main_menu_loop("fast", auth_headers))
+
+
+def interactive_menu() -> None:
+    """Top-level interactive menu that drives the whole session."""
+    print(BANNER)
+    print("  1. Auto Pilot  -> Sesi Browser (.env Session)")
+    print("  2. Fast Skip   -> Direct Token (GITHUB_TOKEN)")
+    print()
+
+    choice = input("  [?] Pilih Mode Eksekusi [1/2]: ").strip()
+
+    if choice == "1":
+        handle_auto_mode()
+    elif choice == "2":
+        handle_skip_mode()
+    else:
+        print(f"{TS.badge_alert()} Pilihan tidak valid. Keluar.")
         sys.exit(1)
-
-    print(f"\n{TS.badge_success()} Api Key Ditemukan di .env menggunakan github token Login State!")
-
-    keyword = input("\n  \U0001f4e5 Masukkan Keyword Pencarian (Contoh: api/skills): ").strip()
-    if not keyword:
-        print("[!] Keyword kosong. Keluar.")
-        sys.exit(1)
-
-    max_pages = 5
-    asyncio.run(run_engine_a(keyword, token, max_pages))
 
 
 # ---------------------------------------------------------------------------
