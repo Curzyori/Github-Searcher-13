@@ -1,0 +1,148 @@
+{
+  "files": [
+    {
+      "displayName": "README.md",
+      "repoName": "sample-obsidian-antigravity-1",
+      "refName": "main",
+      "path": "README.md",
+      "preferredFileType": "readme",
+      "tabName": "README",
+      "richText": "<article class=\"markdown-body entry-content container-lg\" itemprop=\"text\"><div class=\"markdown-heading\" dir=\"auto\"><h1 tabindex=\"-1\" class=\"heading-element\" dir=\"auto\">Obsidian Knowledge Management System</h1><a id=\"user-content-obsidian-knowledge-management-system\" class=\"anchor\" aria-label=\"Permalink: Obsidian Knowledge Management System\" href=\"#obsidian-knowledge-management-system\"><svg data-component=\"Octicon\" class=\"octicon octicon-link\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" height=\"16\" aria-hidden=\"true\"><path d=\"m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z\"></path></svg></a></div>\n<p dir=\"auto\">このリポジトリは、PARA法とZettelkastenを組み合わせた知識管理システムです。Obsidianを使用して、日々の情報を効率的に整理・活用するための構造化されたワークスペースです。</p>\n<div class=\"markdown-heading\" dir=\"auto\"><h2 tabindex=\"-1\" class=\"heading-element\" dir=\"auto\">📁 フォルダ構成</h2><a id=\"user-content--フォルダ構成\" class=\"anchor\" aria-label=\"Permalink: 📁 フォルダ構成\" href=\"#-フォルダ構成\"><svg data-component=\"Octicon\" class=\"octicon octicon-link\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" height=\"16\" aria-hidden=\"true\"><path d=\"m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z\"></path></svg></a></div>\n<div class=\"markdown-heading\" dir=\"auto\"><h3 tabindex=\"-1\" class=\"heading-element\" dir=\"auto\">00_Memo/ 🎤</h3><a id=\"user-content-00_memo-\" class=\"anchor\" aria-label=\"Permalink: 00_Memo/ 🎤\" href=\"#00_memo-\"><svg data-component=\"Octicon\" class=\"octicon octicon-link\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" height=\"16\" aria-hidden=\"true\"><path d=\"m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z\"></path></svg></a></div>\n<p dir=\"auto\"><strong>何でも放り込む場所（考えずに入れる）</strong></p>\n<ul dir=\"auto\">\n<li>最初に情報を入れる場所</li>\n<li>思考を止めずに素早く記録</li>\n<li>後で整理する前提で自由に記入</li>\n</ul>\n<div class=\"markdown-heading\" dir=\"auto\"><h3 tabindex=\"-1\" class=\"heading-element\" dir=\"auto\">01_Inbox/ 📥</h3><a id=\"user-content-01_inbox-\" class=\"anchor\" aria-label=\"Permalink: 01_Inbox/ 📥\" href=\"#01_inbox-\"><svg data-component=\"Octicon\" class=\"octicon octicon-link\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" height=\"16\" aria-hidden=\"true\"><path d=\"m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z\"></path></svg></a></div>\n<p dir=\"auto\"><strong>Cursor処理済み（整理済みmd）</strong></p>\n<ul dir=\"auto\">\n<li>00_Memoから整理されたファイルが入る</li>\n<li>タグ・双方向リンクが付与された状態</li>\n<li>日付プレフィックスで命名（例: <code>2025-01-13-ai-tool-idea.md</code>）</li>\n</ul>\n<div class=\"markdown-heading\" dir=\"auto\"><h3 tabindex=\"-1\" class=\"heading-element\" dir=\"auto\">02_Daily/ 📅</h3><a id=\"user-content-02_daily-\" class=\"anchor\" aria-label=\"Permalink: 02_Daily/ 📅\" href=\"#02_daily-\"><svg data-component=\"Octicon\" class=\"octicon octicon-link\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" height=\"16\" aria-hidden=\"true\"><path d=\"m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z\"></path></svg></a></div>\n<p dir=\"auto\"><strong>デイリーノート（エピソード記憶）</strong></p>\n<ul dir=\"auto\">\n<li>日々の記録を時系列で管理</li>\n<li>年/月/日の階層構造</li>\n<li>デイリーログ、TODO、会議メモ、学習メモ、アイデアなどを日付フォルダに格納</li>\n<li>週次・月次レビューも含む</li>\n</ul>\n<div class=\"markdown-heading\" dir=\"auto\"><h3 tabindex=\"-1\" class=\"heading-element\" dir=\"auto\">03_Input/ 🔥</h3><a id=\"user-content-03_input-\" class=\"anchor\" aria-label=\"Permalink: 03_Input/ 🔥\" href=\"#03_input-\"><svg data-component=\"Octicon\" class=\"octicon octicon-link\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" height=\"16\" aria-hidden=\"true\"><path d=\"m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z\"></path></svg></a></div>\n<p dir=\"auto\"><strong>短期記憶（今週〜今月）</strong></p>\n<ul dir=\"auto\">\n<li>現在進行中の情報や資料</li>\n<li>今週の焦点、今月の目標</li>\n<li>ホットトピックや参照資料</li>\n<li>定期的に整理・移動する</li>\n</ul>\n<div class=\"markdown-heading\" dir=\"auto\"><h3 tabindex=\"-1\" class=\"heading-element\" dir=\"auto\">04_Memory/ 🧠</h3><a id=\"user-content-04_memory-\" class=\"anchor\" aria-label=\"Permalink: 04_Memory/ 🧠\" href=\"#04_memory-\"><svg data-component=\"Octicon\" class=\"octicon octicon-link\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" height=\"16\" aria-hidden=\"true\"><path d=\"m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z\"></path></svg></a></div>\n<p dir=\"auto\"><strong>長期記憶（体系化知識）</strong></p>\n<ul dir=\"auto\">\n<li>体系化された知識ベース</li>\n<li>カテゴリ別に整理（AI、Education、Business、Technical、Personal）</li>\n<li>MOC（Map of Contents）で全体を管理</li>\n<li>ツール、テクニック、コンセプトなど階層的に分類</li>\n</ul>\n<div class=\"markdown-heading\" dir=\"auto\"><h3 tabindex=\"-1\" class=\"heading-element\" dir=\"auto\">05_Output/ 🎯</h3><a id=\"user-content-05_output-\" class=\"anchor\" aria-label=\"Permalink: 05_Output/ 🎯\" href=\"#05_output-\"><svg data-component=\"Octicon\" class=\"octicon octicon-link\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" height=\"16\" aria-hidden=\"true\"><path d=\"m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z\"></path></svg></a></div>\n<p dir=\"auto\"><strong>アウトプット管理</strong></p>\n<div class=\"markdown-heading\" dir=\"auto\"><h4 tabindex=\"-1\" class=\"heading-element\" dir=\"auto\">Projects/ - 期限ありプロジェクト</h4><a id=\"user-content-projects---期限ありプロジェクト\" class=\"anchor\" aria-label=\"Permalink: Projects/ - 期限ありプロジェクト\" href=\"#projects---期限ありプロジェクト\"><svg data-component=\"Octicon\" class=\"octicon octicon-link\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" height=\"16\" aria-hidden=\"true\"><path d=\"m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z\"></path></svg></a></div>\n<ul dir=\"auto\">\n<li><code>@Active/</code> - 進行中</li>\n<li><code>@Planning/</code> - 企画中</li>\n<li><code>@Completed/</code> - 完了</li>\n</ul>\n<div class=\"markdown-heading\" dir=\"auto\"><h4 tabindex=\"-1\" class=\"heading-element\" dir=\"auto\">Areas/ - 継続的エリア（期限なし）</h4><a id=\"user-content-areas---継続的エリア期限なし\" class=\"anchor\" aria-label=\"Permalink: Areas/ - 継続的エリア（期限なし）\" href=\"#areas---継続的エリア期限なし\"><svg data-component=\"Octicon\" class=\"octicon octicon-link\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" height=\"16\" aria-hidden=\"true\"><path d=\"m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z\"></path></svg></a></div>\n<ul dir=\"auto\">\n<li>Content-Creation/ - YouTube、ブログ、SNS</li>\n<li>Business/ - 事業運営</li>\n<li>Personal/ - 個人の継続的活動</li>\n<li>Community/ - コミュニティ活動</li>\n</ul>\n<p dir=\"auto\">各エリアは <code>@TODO/</code>, <code>@Doing/</code>, <code>@Completed/</code> で管理</p>\n<div class=\"markdown-heading\" dir=\"auto\"><h3 tabindex=\"-1\" class=\"heading-element\" dir=\"auto\">06_Templates/ 📋</h3><a id=\"user-content-06_templates-\" class=\"anchor\" aria-label=\"Permalink: 06_Templates/ 📋\" href=\"#06_templates-\"><svg data-component=\"Octicon\" class=\"octicon octicon-link\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" height=\"16\" aria-hidden=\"true\"><path d=\"m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z\"></path></svg></a></div>\n<p dir=\"auto\"><strong>テンプレート集</strong></p>\n<ul dir=\"auto\">\n<li>Daily/ - デイリーノート用テンプレート</li>\n<li>Content/ - コンテンツ制作用テンプレート</li>\n<li>Projects/ - プロジェクト管理用テンプレート</li>\n<li>Knowledge/ - 知識管理用テンプレート</li>\n<li>Meeting/ - 会議用テンプレート</li>\n</ul>\n<div class=\"markdown-heading\" dir=\"auto\"><h3 tabindex=\"-1\" class=\"heading-element\" dir=\"auto\">07_System/ ⚙️</h3><a id=\"user-content-07_system-️\" class=\"anchor\" aria-label=\"Permalink: 07_System/ ⚙️\" href=\"#07_system-️\"><svg data-component=\"Octicon\" class=\"octicon octicon-link\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" height=\"16\" aria-hidden=\"true\"><path d=\"m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z\"></path></svg></a></div>\n<p dir=\"auto\"><strong>システム・設定</strong></p>\n<ul dir=\"auto\">\n<li>Dashboards/ - 各種ダッシュボード</li>\n<li>Workflows/ - ワークフロー定義</li>\n<li>Scripts/ - 自動化スクリプト</li>\n<li>Settings/ - Obsidian設定</li>\n<li>Documentation/ - システムドキュメント</li>\n</ul>\n<div class=\"markdown-heading\" dir=\"auto\"><h3 tabindex=\"-1\" class=\"heading-element\" dir=\"auto\">08_prompts/ 📝</h3><a id=\"user-content-08_prompts-\" class=\"anchor\" aria-label=\"Permalink: 08_prompts/ 📝\" href=\"#08_prompts-\"><svg data-component=\"Octicon\" class=\"octicon octicon-link\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" height=\"16\" aria-hidden=\"true\"><path d=\"m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z\"></path></svg></a></div>\n<p dir=\"auto\"><strong>プロンプト集</strong></p>\n<ul dir=\"auto\">\n<li>01_整理系/ - Inbox整理、Memory作成、ファイル振り分け</li>\n<li>02_生成系/ - Daily作成、ブログ記事作成、コンテンツ生成</li>\n<li>03_レビュー系/ - ノート品質チェック、週次レビュー、アーカイブレビュー</li>\n<li>04_学習系/ - 技術調査、知識収集、学習記録</li>\n<li>05_改善系/ - 改善作業用プロンプト（コマンド改善系、フォルダ管理系、システムメンテナンス系）</li>\n<li>06_一括作業系/ - 全量作業、承認不要の一括処理</li>\n</ul>\n<div class=\"markdown-heading\" dir=\"auto\"><h3 tabindex=\"-1\" class=\"heading-element\" dir=\"auto\">99_Archive/ 🗄️</h3><a id=\"user-content-99_archive-️\" class=\"anchor\" aria-label=\"Permalink: 99_Archive/ 🗄️\" href=\"#99_archive-️\"><svg data-component=\"Octicon\" class=\"octicon octicon-link\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" height=\"16\" aria-hidden=\"true\"><path d=\"m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z\"></path></svg></a></div>\n<p dir=\"auto\"><strong>アーカイブ</strong></p>\n<ul dir=\"auto\">\n<li>過去のデータを年別にアーカイブ</li>\n<li>定期的な整理でアクティブな情報を減らす</li>\n</ul>\n<div class=\"markdown-heading\" dir=\"auto\"><h2 tabindex=\"-1\" class=\"heading-element\" dir=\"auto\">🔄 ワークフロー</h2><a id=\"user-content--ワークフロー\" class=\"anchor\" aria-label=\"Permalink: 🔄 ワークフロー\" href=\"#-ワークフロー\"><svg data-component=\"Octicon\" class=\"octicon octicon-link\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" height=\"16\" aria-hidden=\"true\"><path d=\"m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z\"></path></svg></a></div>\n<ol dir=\"auto\">\n<li><strong>収集</strong>: 00_Memo/ に何でも放り込む</li>\n<li><strong>整理</strong>: 01_Inbox/ でタグ・リンクを付与</li>\n<li><strong>分類</strong>: 適切な場所（Daily、Memory、Output）に移動</li>\n<li><strong>活用</strong>: 双方向リンクとMOCで知識を繋げる</li>\n<li><strong>アーカイブ</strong>: 完了・不要になったものは 99_Archive/ へ</li>\n</ol>\n<div class=\"markdown-heading\" dir=\"auto\"><h2 tabindex=\"-1\" class=\"heading-element\" dir=\"auto\">📝 命名規則</h2><a id=\"user-content--命名規則\" class=\"anchor\" aria-label=\"Permalink: 📝 命名規則\" href=\"#-命名規則\"><svg data-component=\"Octicon\" class=\"octicon octicon-link\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" height=\"16\" aria-hidden=\"true\"><path d=\"m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z\"></path></svg></a></div>\n<p dir=\"auto\"><strong>重要</strong>: <strong>フォルダ名は英語、ファイル名は日本語</strong>で作成します。</p>\n<div class=\"markdown-heading\" dir=\"auto\"><h3 tabindex=\"-1\" class=\"heading-element\" dir=\"auto\">ファイル名（日本語）</h3><a id=\"user-content-ファイル名日本語\" class=\"anchor\" aria-label=\"Permalink: ファイル名（日本語）\" href=\"#ファイル名日本語\"><svg data-component=\"Octicon\" class=\"octicon octicon-link\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" height=\"16\" aria-hidden=\"true\"><path d=\"m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z\"></path></svg></a></div>\n<ul dir=\"auto\">\n<li>デイリーノート: <code>YYYY-MM-DD-Daily.md</code> または <code>YYYY-MM-DD-デイリーログ.md</code></li>\n<li>知識ノート: <code>Cursor-キーボードショートカット.md</code>（ハイフンで区切る）</li>\n<li>プロジェクトファイル: <code>プロジェクト名-フェーズ-内容.md</code></li>\n<li>MOC: <code>_カテゴリー-MOC.md</code> (アンダースコアで先頭)</li>\n</ul>\n<div class=\"markdown-heading\" dir=\"auto\"><h3 tabindex=\"-1\" class=\"heading-element\" dir=\"auto\">フォルダ名（英語）</h3><a id=\"user-content-フォルダ名英語\" class=\"anchor\" aria-label=\"Permalink: フォルダ名（英語）\" href=\"#フォルダ名英語\"><svg data-component=\"Octicon\" class=\"octicon octicon-link\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" height=\"16\" aria-hidden=\"true\"><path d=\"m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z\"></path></svg></a></div>\n<ul dir=\"auto\">\n<li>プロジェクト: <code>Project-Name/</code> フォルダ</li>\n<li>カテゴリー: <code>Category-Name/</code> フォルダ</li>\n<li>例: <code>04_Memory/AI/Tools/Cursor/</code></li>\n</ul>\n<div class=\"markdown-heading\" dir=\"auto\"><h2 tabindex=\"-1\" class=\"heading-element\" dir=\"auto\">🏷️ タグシステム</h2><a id=\"user-content-️-タグシステム\" class=\"anchor\" aria-label=\"Permalink: 🏷️ タグシステム\" href=\"#️-タグシステム\"><svg data-component=\"Octicon\" class=\"octicon octicon-link\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" height=\"16\" aria-hidden=\"true\"><path d=\"m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z\"></path></svg></a></div>\n<ul dir=\"auto\">\n<li><code>#project/</code> - プロジェクト関連</li>\n<li><code>#area/</code> - エリア関連</li>\n<li><code>#daily/</code> - デイリーノート</li>\n<li><code>#memory/</code> - 長期記憶</li>\n<li><code>#input/</code> - 短期記憶</li>\n</ul>\n<div class=\"markdown-heading\" dir=\"auto\"><h2 tabindex=\"-1\" class=\"heading-element\" dir=\"auto\">🔗 双方向リンク</h2><a id=\"user-content--双方向リンク\" class=\"anchor\" aria-label=\"Permalink: 🔗 双方向リンク\" href=\"#-双方向リンク\"><svg data-component=\"Octicon\" class=\"octicon octicon-link\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" height=\"16\" aria-hidden=\"true\"><path d=\"m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z\"></path></svg></a></div>\n<ul dir=\"auto\">\n<li><code>[[リンク名]]</code> でノート間を繋げる</li>\n<li>MOCで全体像を把握</li>\n<li>タグで横断的に検索</li>\n</ul>\n<div class=\"markdown-heading\" dir=\"auto\"><h2 tabindex=\"-1\" class=\"heading-element\" dir=\"auto\">📚 参考</h2><a id=\"user-content--参考\" class=\"anchor\" aria-label=\"Permalink: 📚 参考\" href=\"#-参考\"><svg data-component=\"Octicon\" class=\"octicon octicon-link\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" height=\"16\" aria-hidden=\"true\"><path d=\"m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z\"></path></svg></a></div>\n<ul dir=\"auto\">\n<li>PARA法: プロジェクト、エリア、リソース、アーカイブの分類</li>\n<li>Zettelkasten: 双方向リンクによる知識のネットワーク化</li>\n<li>Obsidian: Markdownベースの知識管理ツール</li>\n</ul>\n</article>",
+      "loaded": true,
+      "timedOut": false,
+      "errorMessage": null,
+      "headerInfo": {
+        "toc": [
+          {
+            "level": 1,
+            "text": "Obsidian Knowledge Management System",
+            "anchor": "obsidian-knowledge-management-system",
+            "htmlText": "Obsidian Knowledge Management System"
+          },
+          {
+            "level": 2,
+            "text": "📁 フォルダ構成",
+            "anchor": "-フォルダ構成",
+            "htmlText": "📁 フォルダ構成"
+          },
+          {
+            "level": 3,
+            "text": "00_Memo/ 🎤",
+            "anchor": "00_memo-",
+            "htmlText": "00_Memo/ 🎤"
+          },
+          {
+            "level": 3,
+            "text": "01_Inbox/ 📥",
+            "anchor": "01_inbox-",
+            "htmlText": "01_Inbox/ 📥"
+          },
+          {
+            "level": 3,
+            "text": "02_Daily/ 📅",
+            "anchor": "02_daily-",
+            "htmlText": "02_Daily/ 📅"
+          },
+          {
+            "level": 3,
+            "text": "03_Input/ 🔥",
+            "anchor": "03_input-",
+            "htmlText": "03_Input/ 🔥"
+          },
+          {
+            "level": 3,
+            "text": "04_Memory/ 🧠",
+            "anchor": "04_memory-",
+            "htmlText": "04_Memory/ 🧠"
+          },
+          {
+            "level": 3,
+            "text": "05_Output/ 🎯",
+            "anchor": "05_output-",
+            "htmlText": "05_Output/ 🎯"
+          },
+          {
+            "level": 4,
+            "text": "Projects/ - 期限ありプロジェクト",
+            "anchor": "projects---期限ありプロジェクト",
+            "htmlText": "Projects/ - 期限ありプロジェクト"
+          },
+          {
+            "level": 4,
+            "text": "Areas/ - 継続的エリア（期限なし）",
+            "anchor": "areas---継続的エリア期限なし",
+            "htmlText": "Areas/ - 継続的エリア（期限なし）"
+          },
+          {
+            "level": 3,
+            "text": "06_Templates/ 📋",
+            "anchor": "06_templates-",
+            "htmlText": "06_Templates/ 📋"
+          },
+          {
+            "level": 3,
+            "text": "07_System/ ⚙️",
+            "anchor": "07_system-️",
+            "htmlText": "07_System/ ⚙️"
+          },
+          {
+            "level": 3,
+            "text": "08_prompts/ 📝",
+            "anchor": "08_prompts-",
+            "htmlText": "08_prompts/ 📝"
+          },
+          {
+            "level": 3,
+            "text": "99_Archive/ 🗄️",
+            "anchor": "99_archive-️",
+            "htmlText": "99_Archive/ 🗄️"
+          },
+          {
+            "level": 2,
+            "text": "🔄 ワークフロー",
+            "anchor": "-ワークフロー",
+            "htmlText": "🔄 ワークフロー"
+          },
+          {
+            "level": 2,
+            "text": "📝 命名規則",
+            "anchor": "-命名規則",
+            "htmlText": "📝 命名規則"
+          },
+          {
+            "level": 3,
+            "text": "ファイル名（日本語）",
+            "anchor": "ファイル名日本語",
+            "htmlText": "ファイル名（日本語）"
+          },
+          {
+            "level": 3,
+            "text": "フォルダ名（英語）",
+            "anchor": "フォルダ名英語",
+            "htmlText": "フォルダ名（英語）"
+          },
+          {
+            "level": 2,
+            "text": "🏷️ タグシステム",
+            "anchor": "️-タグシステム",
+            "htmlText": "🏷️ タグシステム"
+          },
+          {
+            "level": 2,
+            "text": "🔗 双方向リンク",
+            "anchor": "-双方向リンク",
+            "htmlText": "🔗 双方向リンク"
+          },
+          {
+            "level": 2,
+            "text": "📚 参考",
+            "anchor": "-参考",
+            "htmlText": "📚 参考"
+          }
+        ],
+        "siteNavLoginPath": "/login?return_to=https%3A%2F%2Fgithub.com%2FAkira-Papa%2Fsample-obsidian-antigravity-1%2Foverview-files%2Fmain"
+      }
+    }
+  ],
+  "processingTime": 0
+}

@@ -1,0 +1,64 @@
+{
+  "files": [
+    {
+      "displayName": "README.md",
+      "repoName": "antigravity-lazy-pack",
+      "refName": "main",
+      "path": "README.md",
+      "preferredFileType": "readme",
+      "tabName": "README",
+      "richText": "<article class=\"markdown-body entry-content container-lg\" itemprop=\"text\"><div class=\"markdown-heading\" dir=\"auto\"><h1 tabindex=\"-1\" class=\"heading-element\" dir=\"auto\">Anti-Gravity 懶人包</h1><a id=\"user-content-anti-gravity-懶人包\" class=\"anchor\" aria-label=\"Permalink: Anti-Gravity 懶人包\" href=\"#anti-gravity-懶人包\"><svg data-component=\"Octicon\" class=\"octicon octicon-link\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" height=\"16\" aria-hidden=\"true\"><path d=\"m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z\"></path></svg></a></div>\n<p dir=\"auto\">這個 repo 只放 Anti-Gravity 使用者可公開套用的懶人包文件，不放個人 NotebookLM 清單、研究產物、生成圖片、測試專案或任何帳號資料。</p>\n<div class=\"markdown-heading\" dir=\"auto\"><h2 tabindex=\"-1\" class=\"heading-element\" dir=\"auto\">目前檔案</h2><a id=\"user-content-目前檔案\" class=\"anchor\" aria-label=\"Permalink: 目前檔案\" href=\"#目前檔案\"><svg data-component=\"Octicon\" class=\"octicon octicon-link\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" height=\"16\" aria-hidden=\"true\"><path d=\"m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z\"></path></svg></a></div>\n<ul dir=\"auto\">\n<li><code>09-AntiGravity專屬懶人包.md</code>：主懶人包，整理 NotebookLM、Firebase、GitHub 與開工 / 收工 / 新專案初始化流程；Obsidian 只保留為人工專案筆記，不再安裝 MCPVault。</li>\n<li><code>.gitignore</code>：排除本機設定、NotebookLM 匯出、生成圖片、測試 app、API key 與暫存資料。</li>\n</ul>\n<div class=\"markdown-heading\" dir=\"auto\"><h2 tabindex=\"-1\" class=\"heading-element\" dir=\"auto\">使用方式</h2><a id=\"user-content-使用方式\" class=\"anchor\" aria-label=\"Permalink: 使用方式\" href=\"#使用方式\"><svg data-component=\"Octicon\" class=\"octicon octicon-link\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" height=\"16\" aria-hidden=\"true\"><path d=\"m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z\"></path></svg></a></div>\n<div class=\"markdown-heading\" dir=\"auto\"><h3 tabindex=\"-1\" class=\"heading-element\" dir=\"auto\">方式一：直接叫 AI 幫你裝（最簡單）</h3><a id=\"user-content-方式一直接叫-ai-幫你裝最簡單\" class=\"anchor\" aria-label=\"Permalink: 方式一：直接叫 AI 幫你裝（最簡單）\" href=\"#方式一直接叫-ai-幫你裝最簡單\"><svg data-component=\"Octicon\" class=\"octicon octicon-link\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" height=\"16\" aria-hidden=\"true\"><path d=\"m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z\"></path></svg></a></div>\n<p dir=\"auto\">把這行貼給你的 AI agent：</p>\n<div class=\"snippet-clipboard-content notranslate position-relative overflow-auto\" data-snippet-clipboard-copy-content=\"這是 AntiGravity 懶人包 https://github.com/mathruffian-dot/antigravity-lazy-pack\n請讀取 repo 內容，列出所有可用的懶人包，問我要裝哪些。\"><pre class=\"notranslate\"><code>這是 AntiGravity 懶人包 https://github.com/mathruffian-dot/antigravity-lazy-pack\n請讀取 repo 內容，列出所有可用的懶人包，問我要裝哪些。\n</code></pre></div>\n<p dir=\"auto\">AI 會自動讀取 <code>SKILL.md</code>（安裝入口），列出 6 個技能，問你要裝哪些，然後自動安裝。</p>\n<div class=\"markdown-heading\" dir=\"auto\"><h3 tabindex=\"-1\" class=\"heading-element\" dir=\"auto\">方式二：手動開啟 MD 檔</h3><a id=\"user-content-方式二手動開啟-md-檔\" class=\"anchor\" aria-label=\"Permalink: 方式二：手動開啟 MD 檔\" href=\"#方式二手動開啟-md-檔\"><svg data-component=\"Octicon\" class=\"octicon octicon-link\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" height=\"16\" aria-hidden=\"true\"><path d=\"m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z\"></path></svg></a></div>\n<ol dir=\"auto\">\n<li>開啟 <code>09-AntiGravity專屬懶人包.md</code></li>\n<li>把文件內容交給 Anti-Gravity 或 AI 編碼助理</li>\n<li>依序完成環境檢查、OAuth 登入、NotebookLM / Firebase MCP 設定與工作流程設定</li>\n</ol>\n<div class=\"markdown-heading\" dir=\"auto\"><h2 tabindex=\"-1\" class=\"heading-element\" dir=\"auto\">安全原則</h2><a id=\"user-content-安全原則\" class=\"anchor\" aria-label=\"Permalink: 安全原則\" href=\"#安全原則\"><svg data-component=\"Octicon\" class=\"octicon octicon-link\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" height=\"16\" aria-hidden=\"true\"><path d=\"m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z\"></path></svg></a></div>\n<ul dir=\"auto\">\n<li>NotebookLM 登入走瀏覽器 OAuth；不要複製 cookie、token 或私有匯出檔。</li>\n<li>不把 <code>notebooks.json</code>、NotebookLM 筆記本 ID 清單、研究報告、生成圖片放進公開 repo。</li>\n<li>不把 API key、GitHub token、Firebase Admin 憑證寫進 Markdown 或 GitHub。</li>\n<li>收工時先檢查 diff，只提交本次相關檔案，不使用無差別 <code>git add .</code>。</li>\n</ul>\n<div class=\"markdown-heading\" dir=\"auto\"><h2 tabindex=\"-1\" class=\"heading-element\" dir=\"auto\">相關系列</h2><a id=\"user-content-相關系列\" class=\"anchor\" aria-label=\"Permalink: 相關系列\" href=\"#相關系列\"><svg data-component=\"Octicon\" class=\"octicon octicon-link\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" height=\"16\" aria-hidden=\"true\"><path d=\"m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z\"></path></svg></a></div>\n<ul dir=\"auto\">\n<li>Codex 懶人包：<a href=\"https://github.com/mathruffian-dot/codex-lazy-packs\">https://github.com/mathruffian-dot/codex-lazy-packs</a></li>\n<li>Claude Code 懶人包：<a href=\"https://github.com/mathruffian-dot/claude-code-lazy-packs\">https://github.com/mathruffian-dot/claude-code-lazy-packs</a></li>\n<li>OpenCode 懶人包：<a href=\"https://github.com/mathruffian-dot/opencode-lazy-packs\">https://github.com/mathruffian-dot/opencode-lazy-packs</a></li>\n</ul>\n</article>",
+      "loaded": true,
+      "timedOut": false,
+      "errorMessage": null,
+      "headerInfo": {
+        "toc": [
+          {
+            "level": 1,
+            "text": "Anti-Gravity 懶人包",
+            "anchor": "anti-gravity-懶人包",
+            "htmlText": "Anti-Gravity 懶人包"
+          },
+          {
+            "level": 2,
+            "text": "目前檔案",
+            "anchor": "目前檔案",
+            "htmlText": "目前檔案"
+          },
+          {
+            "level": 2,
+            "text": "使用方式",
+            "anchor": "使用方式",
+            "htmlText": "使用方式"
+          },
+          {
+            "level": 3,
+            "text": "方式一：直接叫 AI 幫你裝（最簡單）",
+            "anchor": "方式一直接叫-ai-幫你裝最簡單",
+            "htmlText": "方式一：直接叫 AI 幫你裝（最簡單）"
+          },
+          {
+            "level": 3,
+            "text": "方式二：手動開啟 MD 檔",
+            "anchor": "方式二手動開啟-md-檔",
+            "htmlText": "方式二：手動開啟 MD 檔"
+          },
+          {
+            "level": 2,
+            "text": "安全原則",
+            "anchor": "安全原則",
+            "htmlText": "安全原則"
+          },
+          {
+            "level": 2,
+            "text": "相關系列",
+            "anchor": "相關系列",
+            "htmlText": "相關系列"
+          }
+        ],
+        "siteNavLoginPath": "/login?return_to=https%3A%2F%2Fgithub.com%2Fmathruffian-dot%2Fantigravity-lazy-pack%2Foverview-files%2Fmain"
+      }
+    }
+  ],
+  "processingTime": 0
+}
