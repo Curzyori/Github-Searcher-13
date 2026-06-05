@@ -593,9 +593,8 @@ def extract_marks_from_html(html_lines: list[str]) -> set[str]:
 
 def derive_output_dirname(query: str) -> str:
     """Derive a filesystem-safe directory name from a search query."""
-    if query.startswith("/"):
-        parts = query.split("/")
-        inner = parts[1] if len(parts) > 1 else query
+    if query.startswith("/") and query.endswith("/"):
+        inner = query[1:-1]
         dir_name = re.split(r'[\[\]{}()*+?\\^$|.]', inner)[0]
         dir_name = dir_name.rstrip('-_')
     else:
@@ -659,20 +658,18 @@ async def web_search_page_json(
     return payload.get("results", [])
 
 
-async def validate_raw_file(
+async def fetch_raw_content_b(
     client: httpx.AsyncClient,
     owner: str,
     repo: str,
     filepath: str,
     ref: str,
-    tokens: set[str],
-) -> set[str]:
+) -> str | None:
     """
-    Validate extracted tokens by fetching the actual raw file.
+    Download the raw text content of a file from GitHub.
 
-    Downloads the file from raw.githubusercontent.com and checks
-    whether each token string truly exists in the file body.
-    Returns only the subset of tokens that are confirmed present.
+    Uses raw.githubusercontent.com with a specific commit SHA for
+    deterministic results.  Returns None if the file is unreachable.
     """
     raw_url = (
         f"https://raw.githubusercontent.com/"
@@ -682,13 +679,12 @@ async def validate_raw_file(
     try:
         resp = await client.get(raw_url, follow_redirects=True)
     except httpx.RequestError:
-        return set()
+        return None
 
     if resp.status_code != 200:
-        return set()
+        return None
 
-    content = resp.text
-    return {t for t in tokens if t in content}
+    return resp.text
 
 
 async def process_json_result(
@@ -697,15 +693,24 @@ async def process_json_result(
     pattern: re.Pattern | None,
     output_dir: Path,
     global_seen: set,
-    validate: bool = True,
+    is_regex_query: bool = False,
 ) -> int:
     """
     Process a single JSON search result from GitHub's internal API.
 
-    1. Extract tokens from <mark> tags in the snippet HTML.
-    2. Optionally apply a local regex filter.
-    3. Validate tokens by fetching the raw file (if enabled).
-    4. Save unique, validated tokens to a .txt output file.
+    Two modes of operation:
+
+    **Regex query** (is_regex_query=True):
+        GitHub already matched the full token.  Extract it from the
+        <mark> tags in the snippet HTML, then validate by fetching
+        the raw file to confirm the token is really there.
+
+    **Plain keyword** (is_regex_query=False):
+        The <mark> tags only contain the short keyword itself, which
+        is not the full token we want.  Instead, download the entire
+        raw file and scan it with the local regex pattern to extract
+        all matching tokens.  This covers ALL file types (.env, .py,
+        .js, .json, .yml, etc.) since we're scanning the raw content.
     """
     repo_nwo = result.get("repo_nwo", "unknown/unknown")
     parts = repo_nwo.split("/", 1)
@@ -716,38 +721,51 @@ async def process_json_result(
     repo_url = f"https://github.com/{repo_nwo}"
     line_num = result.get("line_number", 0)
 
-    # --- Step 1: Extract tokens from <mark> tags in snippets -----------
-    snippet_tokens: set[str] = set()
-    for snippet in result.get("snippets", []):
-        lines = snippet.get("lines", [])
-        marks = extract_marks_from_html(lines)
-        snippet_tokens.update(marks)
+    found_tokens: set[str] = set()
 
-    if not snippet_tokens:
+    if is_regex_query:
+        # ---- Regex query mode: extract from <mark> tags ---------------
+        for snippet in result.get("snippets", []):
+            lines = snippet.get("lines", [])
+            marks = extract_marks_from_html(lines)
+            found_tokens.update(marks)
+
+        if not found_tokens:
+            return 0
+
+        # Validate by fetching raw file
+        content = await fetch_raw_content_b(
+            client, owner, repo, filepath, commit_sha
+        )
+        if content is None:
+            return 0
+
+        found_tokens = {t for t in found_tokens if t in content}
+
+    else:
+        # ---- Plain keyword mode: download raw file & scan with regex --
+        if not pattern:
+            return 0
+
+        content = await fetch_raw_content_b(
+            client, owner, repo, filepath, commit_sha
+        )
+        if content is None:
+            return 0
+
+        found_tokens = set(pattern.findall(content))
+
+    if not found_tokens:
         return 0
 
-    # --- Step 2: Optional local regex filter ---------------------------
-    if pattern:
-        snippet_tokens = {t for t in snippet_tokens if pattern.search(t)}
-        if not snippet_tokens:
-            return 0
-
-    # --- Step 3: Validate by fetching the raw file --------------------
-    if validate:
-        snippet_tokens = await validate_raw_file(
-            client, owner, repo, filepath, commit_sha, snippet_tokens
-        )
-        if not snippet_tokens:
-            return 0
-
-    # --- Step 4: Deduplicate against global seen set ------------------
-    new_tokens = snippet_tokens - global_seen
+    # --- Deduplicate against global seen set --------------------------
+    new_tokens = found_tokens - global_seen
     if not new_tokens:
         return 0
 
     global_seen.update(new_tokens)
 
-    # --- Step 5: Write output file ------------------------------------
+    # --- Write output file --------------------------------------------
     base_name = f"{owner}_{repo}_{sanitize_filename(filepath)}_L{line_num}"
     out_path = output_dir / (base_name + ".txt")
 
@@ -771,6 +789,8 @@ async def run_engine_b(
     session_cookie: str,
     max_pages: int,
     output_dir_name: str | None = None,
+    is_regex_query: bool | None = None,
+    base_query: str | None = None,
 ) -> None:
     """
     Engine B (Auto): query github.com/search JSON API with a session cookie.
@@ -778,12 +798,16 @@ async def run_engine_b(
     Supports both plain keyword queries and GitHub regex queries
     (e.g. /sk-[a-zA-Z0-9]{10,50}/).
     """
-    dir_name = output_dir_name or derive_output_dirname(query)
+    if is_regex_query is None:
+        is_regex_query = query.startswith("/") and query.endswith("/")
+    if base_query is None:
+        base_query = query
+
+    dir_name = output_dir_name or derive_output_dirname(base_query)
     output_dir = RESULTS_ROOT / dir_name
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    is_regex_query = query.startswith("/")
-    pattern = None if is_regex_query else build_pattern(query)
+    pattern = None if is_regex_query else build_pattern(base_query)
 
     global_seen: set[str] = set()
     total_tokens = 0
@@ -792,8 +816,9 @@ async def run_engine_b(
     print(f"\n[Engine B] Target query  : '{query}'")
     if pattern:
         print(f"[Engine B] Local filter  : {pattern.pattern}")
+        print(f"[Engine B] Mode          : Download raw file & scan (semua jenis file)")
     else:
-        print(f"[Engine B] Mode          : Regex query (GitHub-side matching)")
+        print(f"[Engine B] Mode          : Regex query (extract dari <mark> tags)")
     print(f"[Engine B] Validasi      : Fetch raw file untuk konfirmasi")
     print(f"[Engine B] Output        : {output_dir.resolve()}\n")
 
@@ -808,58 +833,44 @@ async def run_engine_b(
         },
         follow_redirects=True,
     ) as client:
-        try:
-            for page in range(1, max_pages + 1):
-                results = await web_search_page_json(client, query, page)
-                if results is None:
-                    break
-                if not results:
-                    print(f"[*] Page {page}: Tidak ada hasil lagi. Selesai.")
-                    break
+        for page in range(1, max_pages + 1):
+            results = await web_search_page_json(client, query, page)
+            if results is None:
+                break
+            if not results:
+                print(f"[*] Page {page}: Tidak ada hasil lagi. Selesai.")
+                break
 
-                print(f"[*] Page {page}: Scanning {len(results)} result target...")
+            print(f"[*] Page {page}: Scanning {len(results)} result target...")
 
-                tasks = [
-                    process_json_result(
-                        client, item, pattern, output_dir, global_seen,
-                        validate=True,
-                    )
-                    for item in results
-                ]
-                page_results = await asyncio.gather(*tasks)
+            tasks = [
+                process_json_result(
+                    client, item, pattern, output_dir, global_seen,
+                    is_regex_query=is_regex_query,
+                )
+                for item in results
+            ]
+            page_results = await asyncio.gather(*tasks)
 
-                page_tokens = sum(page_results)
-                page_files = sum(1 for r in page_results if r > 0)
-                total_tokens += page_tokens
-                total_files += page_files
+            page_tokens = sum(page_results)
+            page_files = sum(1 for r in page_results if r > 0)
+            total_tokens += page_tokens
+            total_files += page_files
 
-                if page_files > 0:
-                    print(
-                        f"{TS.badge_done()}    -> "
-                        f"{TS.TEXT_GREEN}{page_files}{TS.RESET} file validated | "
-                        f"{TS.TEXT_GREEN}{page_tokens}{TS.RESET} token unik diamankan"
-                    )
-                else:
-                    print(
-                        f"{TS.TEXT_MUTED}    -> {page_files} file validated | "
-                        f"{page_tokens} token unik diamankan{TS.RESET}"
-                    )
+            if page_files > 0:
+                print(
+                    f"{TS.badge_done()}    -> "
+                    f"{TS.TEXT_GREEN}{page_files}{TS.RESET} file validated | "
+                    f"{TS.TEXT_GREEN}{page_tokens}{TS.RESET} token unik diamankan"
+                )
+            else:
+                print(
+                    f"{TS.TEXT_MUTED}    -> {page_files} file validated | "
+                    f"{page_tokens} token unik diamankan{TS.RESET}"
+                )
 
-                if page < max_pages:
-                    await asyncio.sleep(3.0)
-        except KeyboardInterrupt:
-            print(f"\n{TS.badge_alert()} Proses dibatalkan oleh user. Menulis hasil sementara...")
-            all_txt_path = output_dir / "all.txt"
-            async with aiofiles.open(all_txt_path, mode="w", encoding="utf-8") as fh:
-                for token in sorted(global_seen):
-                    await fh.write(token + "\n")
-            print(f"{TS.badge_success()} Hasil sementara disimpan ke {all_txt_path.name}")
-            sys.exit(0)
-
-    all_txt_path = output_dir / "all.txt"
-    async with aiofiles.open(all_txt_path, mode="w", encoding="utf-8") as fh:
-        for token in sorted(global_seen):
-            await fh.write(token + "\n")
+            if page < max_pages:
+                await asyncio.sleep(3.0)
 
     print(
         f"\n{TS.badge_success()} Proses Selesai. "
@@ -1003,26 +1014,50 @@ def handle_auto_mode() -> None:
             print(f"  🏷️ Nama     : {user_info['name']}")
             print(f"  📧 Email    : {user_info['email']}")
 
-    keyword = input("  📥 Masukkan Keyword Utama (Contoh: designs/skills): ").strip()
-    if not keyword:
-        print("[!] Keyword kosong. Keluar.")
+    # Prompt for search query.
+    print("\n  💡 Tips: Bisa pakai regex GitHub, contoh: /sk-[a-zA-Z0-9]{10,50}/")
+    query = input("  📥 Masukkan Query Pencarian: ").strip()
+    if not query:
+        print("[!] Query kosong. Keluar.")
         sys.exit(1)
 
-    max_len_input = input("  📏 Batas Maksimal Karakter Token (Default 50): ").strip()
-    max_len = max_len_input if max_len_input else "50"
+    # Prompt for file extension filter.
+    print()
+    print(f"  {TS.TEXT_MUTED}Filter ekstensi file (opsional):{TS.RESET}")
+    print(f"  {TS.TEXT_MUTED}  Include : .env,.py,.js,.txt    (cari HANYA di file ini){TS.RESET}")
+    print(f"  {TS.TEXT_MUTED}  Exclude : !.md,!.txt           (skip file ini){TS.RESET}")
+    print(f"  {TS.TEXT_MUTED}  Kosong  : cari di semua file{TS.RESET}")
+    ext_filter = input("  📂 Filter ekstensi: ").strip()
 
-    ext_input = input("  📁 Target Ekstensi File (Contoh: py/js/ts atau kosongkan untuk semua): ").strip()
+    # Build the final query with GitHub path: qualifiers.
+    final_query = query
+    if ext_filter:
+        parts = [p.strip() for p in ext_filter.split(",") if p.strip()]
+        for part in parts:
+            if part.startswith("!"):
+                # Exclude mode: NOT path:*.ext
+                ext = part[1:].lstrip("*").lstrip(".")
+                final_query += f" NOT path:*.{ext}"
+            else:
+                # Include mode: path:*.ext
+                ext = part.lstrip("*").lstrip(".")
+                final_query += f" path:*.{ext}"
 
-    query = f"/{keyword}-[a-zA-Z0-9]{{10,{max_len}}}/ NOT path:README.md NOT path:*.md NOT path:*.txt NOT path:*.json"
-    if ext_input:
-        query += f" extension:{ext_input}"
-
-    print(f"[⚙️ CORE] Compiled GitHub Regex Query: '{query}'")
+    if final_query != query:
+        print(f"\n  {TS.TEXT_MUTED}Final query: {final_query}{TS.RESET}")
 
     max_pages_input = input("  📄 Jumlah halaman (default 5): ").strip()
     max_pages = int(max_pages_input) if max_pages_input.isdigit() else 5
 
-    asyncio.run(run_engine_b(query, session_cookie, max_pages))
+    # Determine if the user's initial query was a regex query
+    is_regex = query.startswith("/") and query.endswith("/")
+    asyncio.run(run_engine_b(
+        final_query,
+        session_cookie,
+        max_pages,
+        is_regex_query=is_regex,
+        base_query=query
+    ))
 
 
 def handle_skip_mode() -> None:
