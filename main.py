@@ -833,44 +833,58 @@ async def run_engine_b(
         },
         follow_redirects=True,
     ) as client:
-        for page in range(1, max_pages + 1):
-            results = await web_search_page_json(client, query, page)
-            if results is None:
-                break
-            if not results:
-                print(f"[*] Page {page}: Tidak ada hasil lagi. Selesai.")
-                break
+        try:
+            for page in range(1, max_pages + 1):
+                results = await web_search_page_json(client, query, page)
+                if results is None:
+                    break
+                if not results:
+                    print(f"[*] Page {page}: Tidak ada hasil lagi. Selesai.")
+                    break
 
-            print(f"[*] Page {page}: Scanning {len(results)} result target...")
+                print(f"[*] Page {page}: Scanning {len(results)} result target...")
 
-            tasks = [
-                process_json_result(
-                    client, item, pattern, output_dir, global_seen,
-                    is_regex_query=is_regex_query,
-                )
-                for item in results
-            ]
-            page_results = await asyncio.gather(*tasks)
+                tasks = [
+                    process_json_result(
+                        client, item, pattern, output_dir, global_seen,
+                        is_regex_query=is_regex_query,
+                    )
+                    for item in results
+                ]
+                page_results = await asyncio.gather(*tasks)
 
-            page_tokens = sum(page_results)
-            page_files = sum(1 for r in page_results if r > 0)
-            total_tokens += page_tokens
-            total_files += page_files
+                page_tokens = sum(page_results)
+                page_files = sum(1 for r in page_results if r > 0)
+                total_tokens += page_tokens
+                total_files += page_files
 
-            if page_files > 0:
-                print(
-                    f"{TS.badge_done()}    -> "
-                    f"{TS.TEXT_GREEN}{page_files}{TS.RESET} file validated | "
-                    f"{TS.TEXT_GREEN}{page_tokens}{TS.RESET} token unik diamankan"
-                )
-            else:
-                print(
-                    f"{TS.TEXT_MUTED}    -> {page_files} file validated | "
-                    f"{page_tokens} token unik diamankan{TS.RESET}"
-                )
+                if page_files > 0:
+                    print(
+                        f"{TS.badge_done()}    -> "
+                        f"{TS.TEXT_GREEN}{page_files}{TS.RESET} file validated | "
+                        f"{TS.TEXT_GREEN}{page_tokens}{TS.RESET} token unik diamankan"
+                    )
+                else:
+                    print(
+                        f"{TS.TEXT_MUTED}    -> {page_files} file validated | "
+                        f"{page_tokens} token unik diamankan{TS.RESET}"
+                    )
 
-            if page < max_pages:
-                await asyncio.sleep(3.0)
+                if page < max_pages:
+                    await asyncio.sleep(3.0)
+        except KeyboardInterrupt:
+            print(f"\n{TS.badge_alert()} Proses dibatalkan oleh user. Menulis hasil sementara...")
+            all_txt_path = output_dir / "all.txt"
+            async with aiofiles.open(all_txt_path, mode="w", encoding="utf-8") as fh:
+                for token in sorted(global_seen):
+                    await fh.write(token + "\n")
+            print(f"{TS.badge_success()} Hasil sementara disimpan ke {all_txt_path.name}")
+            sys.exit(0)
+
+    all_txt_path = output_dir / "all.txt"
+    async with aiofiles.open(all_txt_path, mode="w", encoding="utf-8") as fh:
+        for token in sorted(global_seen):
+            await fh.write(token + "\n")
 
     print(
         f"\n{TS.badge_success()} Proses Selesai. "
@@ -1043,6 +1057,7 @@ def handle_auto_mode() -> None:
                 ext = part.lstrip("*").lstrip(".")
                 final_query += f" path:*.{ext}"
 
+    print(f"[⚙️ CORE] Compiled GitHub Regex Query: '{query}'")
     if final_query != query:
         print(f"\n  {TS.TEXT_MUTED}Final query: {final_query}{TS.RESET}")
 
