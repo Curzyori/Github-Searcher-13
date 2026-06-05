@@ -529,37 +529,51 @@ async def run_engine_a(keyword: str, token: str, max_pages: int) -> None:
     print(f"[Engine A] Pattern: {pattern.pattern}")
     print(f"[Engine A] Output : {output_dir.resolve()}\n")
 
-    async with httpx.AsyncClient(timeout=30.0) as client:
-        for page in range(1, max_pages + 1):
-            items = await api_search_page(client, keyword, page, headers)
-            if items is None:
-                break
-            if not items:
-                print(f"[*] Page {page}: Tidak ada hasil lagi. Selesai.")
-                break
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            for page in range(1, max_pages + 1):
+                items = await api_search_page(client, keyword, page, headers)
+                if items is None:
+                    break
+                if not items:
+                    print(f"[*] Page {page}: Tidak ada hasil lagi. Selesai.")
+                    break
 
-            print(f"[*] Page {page}: Scanning {len(items)} blob target...")
+                print(f"[*] Page {page}: Scanning {len(items)} blob target...")
 
-            tasks = [
-                process_api_item(
-                    client, item, pattern, output_dir, headers, global_seen
-                )
-                for item in items
-            ]
-            results = await asyncio.gather(*tasks)
+                tasks = [
+                    process_api_item(
+                        client, item, pattern, output_dir, headers, global_seen
+                    )
+                    for item in items
+                ]
+                results = await asyncio.gather(*tasks)
 
-            page_tokens = sum(results)
-            page_files = sum(1 for r in results if r > 0)
-            total_tokens += page_tokens
-            total_files += page_files
+                page_tokens = sum(results)
+                page_files = sum(1 for r in results if r > 0)
+                total_tokens += page_tokens
+                total_files += page_files
 
-            if page_files > 0:
-                print(f"{TS.badge_done()}    -> {TS.TEXT_GREEN}{page_files}{TS.RESET} file berhasil diekstrak | {TS.TEXT_GREEN}{page_tokens}{TS.RESET} token unik diamankan")
-            else:
-                print(f"{TS.TEXT_MUTED}    -> {page_files} file berhasil diekstrak | {page_tokens} token unik diamankan{TS.RESET}")
+                if page_files > 0:
+                    print(f"{TS.badge_done()}    -> {TS.TEXT_GREEN}{page_files}{TS.RESET} file berhasil diekstrak | {TS.TEXT_GREEN}{page_tokens}{TS.RESET} token unik diamankan")
+                else:
+                    print(f"{TS.TEXT_MUTED}    -> {page_files} file berhasil diekstrak | {page_tokens} token unik diamankan{TS.RESET}")
 
-            if page < max_pages:
-                await asyncio.sleep(2.0)
+                if page < max_pages:
+                    # Delay 5.0 seconds to respect GitHub API rate limits
+                    await asyncio.sleep(5.0)
+    except KeyboardInterrupt:
+        print(f"\n{TS.badge_alert()} Proses dibatalkan oleh user.")
+        sys.exit(0)
+    except Exception as exc:
+        print(f"\n{TS.badge_alert()} Terjadi kesalahan: {exc}")
+    finally:
+        if global_seen:
+            all_txt_path = output_dir / "all.txt"
+            async with aiofiles.open(all_txt_path, mode="w", encoding="utf-8") as fh:
+                for token in sorted(global_seen):
+                    await fh.write(token + "\n")
+            print(f"{TS.badge_success()} Hasil sementara disimpan ke {all_txt_path.name}")
 
     print(
         f"\n{TS.badge_success()} Proses Selesai. {TS.TEXT_GREEN}{total_files}{TS.RESET} file dump dibuat, "
@@ -822,18 +836,18 @@ async def run_engine_b(
     print(f"[Engine B] Validasi      : Fetch raw file untuk konfirmasi")
     print(f"[Engine B] Output        : {output_dir.resolve()}\n")
 
-    async with httpx.AsyncClient(
-        timeout=30.0,
-        headers={
-            "User-Agent": (
-                "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-                "(KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
-            ),
-            "Cookie": f"user_session={session_cookie}",
-        },
-        follow_redirects=True,
-    ) as client:
-        try:
+    try:
+        async with httpx.AsyncClient(
+            timeout=30.0,
+            headers={
+                "User-Agent": (
+                    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+                    "(KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+                ),
+                "Cookie": f"user_session={session_cookie}",
+            },
+            follow_redirects=True,
+        ) as client:
             for page in range(1, max_pages + 1):
                 results = await web_search_page_json(client, query, page)
                 if results is None:
@@ -871,20 +885,20 @@ async def run_engine_b(
                     )
 
                 if page < max_pages:
-                    await asyncio.sleep(3.0)
-        except KeyboardInterrupt:
-            print(f"\n{TS.badge_alert()} Proses dibatalkan oleh user. Menulis hasil sementara...")
+                    # Delay 5.0 seconds to prevent scraping rate limit
+                    await asyncio.sleep(5.0)
+    except KeyboardInterrupt:
+        print(f"\n{TS.badge_alert()} Proses dibatalkan oleh user.")
+        sys.exit(0)
+    except Exception as exc:
+        print(f"\n{TS.badge_alert()} Terjadi kesalahan: {exc}")
+    finally:
+        if global_seen:
             all_txt_path = output_dir / "all.txt"
             async with aiofiles.open(all_txt_path, mode="w", encoding="utf-8") as fh:
                 for token in sorted(global_seen):
                     await fh.write(token + "\n")
             print(f"{TS.badge_success()} Hasil sementara disimpan ke {all_txt_path.name}")
-            sys.exit(0)
-
-    all_txt_path = output_dir / "all.txt"
-    async with aiofiles.open(all_txt_path, mode="w", encoding="utf-8") as fh:
-        for token in sorted(global_seen):
-            await fh.write(token + "\n")
 
     print(
         f"\n{TS.badge_success()} Proses Selesai. "
@@ -995,7 +1009,7 @@ def handle_auto_mode() -> None:
         print(f"\n[*] Memverifikasi Session Key dari .env ...")
         user_info = asyncio.run(verify_session_and_get_user(existing_session))
         if user_info:
-            print(f"\n{TS.badge_success()} Session Key Aktif!")
+            print(f"\n{TS.badge_success()} Session Key Ditemukan di .env. Bypass Login State!")
             print(f"  👤 Username : {TS.TEXT_GREEN}{user_info['username']}{TS.RESET}")
             print(f"  🏷️ Nama     : {user_info['name']}")
             print(f"  📧 Email    : {user_info['email']}")
@@ -1035,34 +1049,10 @@ def handle_auto_mode() -> None:
         print("[!] Query kosong. Keluar.")
         sys.exit(1)
 
-    # Prompt for file extension filter.
-    print()
-    print(f"  {TS.TEXT_MUTED}Filter ekstensi file (opsional):{TS.RESET}")
-    print(f"  {TS.TEXT_MUTED}  Include : .env,.py,.js,.txt    (cari HANYA di file ini){TS.RESET}")
-    print(f"  {TS.TEXT_MUTED}  Exclude : !.md,!.txt           (skip file ini){TS.RESET}")
-    print(f"  {TS.TEXT_MUTED}  Kosong  : cari di semua file{TS.RESET}")
-    ext_filter = input("  📂 Filter ekstensi: ").strip()
-
-    # Build the final query with GitHub path: qualifiers.
     final_query = query
-    if ext_filter:
-        parts = [p.strip() for p in ext_filter.split(",") if p.strip()]
-        for part in parts:
-            if part.startswith("!"):
-                # Exclude mode: NOT path:*.ext
-                ext = part[1:].lstrip("*").lstrip(".")
-                final_query += f" NOT path:*.{ext}"
-            else:
-                # Include mode: path:*.ext
-                ext = part.lstrip("*").lstrip(".")
-                final_query += f" path:*.{ext}"
-
     print(f"[⚙️ CORE] Compiled GitHub Regex Query: '{query}'")
-    if final_query != query:
-        print(f"\n  {TS.TEXT_MUTED}Final query: {final_query}{TS.RESET}")
 
-    max_pages_input = input("  📄 Jumlah halaman (default 5): ").strip()
-    max_pages = int(max_pages_input) if max_pages_input.isdigit() else 5
+    max_pages = 5
 
     # Determine if the user's initial query was a regex query
     is_regex = query.startswith("/") and query.endswith("/")
@@ -1084,7 +1074,7 @@ def handle_skip_mode() -> None:
         print(f"{TS.badge_alert()} GITHUB_TOKEN tidak ditemukan di .env. Keluar.")
         sys.exit(1)
 
-    print(f"\n{TS.badge_success()} Session Key Ditemukan di .env. Bypass Login State!")
+    print(f"\n{TS.badge_success()} Api Key Ditemukan di .env menggunakan github token Login State!")
 
     keyword = input("\n  \U0001f4e5 Masukkan Keyword Pencarian (Contoh: api/skills): ").strip()
     if not keyword:
