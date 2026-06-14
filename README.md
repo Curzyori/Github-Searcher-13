@@ -105,4 +105,4 @@ GITHUB_SESSION=cookie_user_session_otomatis_terisi
 - [ ] Fitur ekspor hasil pencarian ke format JSON dan CSV.
 
 ## License
-Di bawah lisensi [MIT License](file:///home/curzy/workspace/50-Projects-Challenges/Github-Searcher-13/LICENSE). Hak Cipta (c) 2026 @Curzyori & @Seeyaa77.
+Di bawah lisensi [MIT License](https://github.com/Curzyori/Github-Searcher-13/blob/main/LICENSE). Hak Cipta (c) 2026 @Curzyori & @Seeyaa77.
