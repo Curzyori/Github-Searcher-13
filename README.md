@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="images/cli.gif" alt="GitHub Searcher Preview" width="100%"/>
-</p>
-
 <h1 align="center">GitHub Searcher</h1>
 <p align="center">
   <strong>Asynchronous GitHub Repository & Code Scanner CLI</strong>
