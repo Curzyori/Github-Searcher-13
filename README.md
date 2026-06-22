@@ -155,15 +155,4 @@ Built as a collaboration project between **@Curzyori** and **@Seeyaa77**.
 
 ---
 
-## 🔗 Connect
-
-<p align="center">
-  <a href="https://github.com/Curzyori">
-    <img src="https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white"/>
-  </a>
-  <a href="https://curzy.dev">
-    <img src="https://img.shields.io/badge/Portfolio-58A6FF?style=for-the-badge"/>
-  </a>
-</p>
-
 <sub>Built with passion as the 13th Project of the <strong>50 Projects Challenge</strong> by <strong>@curzyori</strong></sub>
